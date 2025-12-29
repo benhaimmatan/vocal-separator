@@ -9,11 +9,20 @@ import sys
 import subprocess
 import logging
 import torch
-import librosa
-import numpy as np
-import soundfile as sf
-import essentia
-import essentia.standard as es
+   import librosa
+   import numpy as np
+   import soundfile as sf
+   from midiutil import MIDIFile
+   from typing import Tuple, List
+   
+   # Make essentia optional
+   try:
+       import essentia
+       import essentia.standard as es
+       ESSENTIA_AVAILABLE = True
+   except ImportError:
+       ESSENTIA_AVAILABLE = False
+       print("Warning: essentia not available. Some audio analysis features will be limited.")
 from midiutil import MIDIFile
 from typing import Tuple, List
 
@@ -200,7 +209,10 @@ class AudioProcessor:
             logger.error(f"Error in process_audio: {e}")
             await self._send_progress(0, f"Error: {str(e)}")
             raise
-
+# Check if essentia is available
+        if not ESSENTIA_AVAILABLE:
+            logger.warning("Essentia not available, MIDI conversion skipped")
+            return None
     def convert_to_midi(self, audio_path: str, output_path: str, 
                        note_threshold: float = 0.5, 
                        polyphony: int = 4,
