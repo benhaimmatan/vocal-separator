@@ -17,4 +17,4 @@ flask==3.1.1
 flask-cors==5.0.1
 midiutil==1.2.1
 beautifulsoup4>=4.9.0
-essentia>=2.1 
+#essentia>=2.1 
