@@ -1,0 +1,281 @@
+.system-audio-guide {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.guide-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.guide-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.guide-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.steps-navigation {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.step-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.step-nav:hover {
+  border-color: #6366f1;
+  background: #f8f9fa;
+}
+
+.step-nav.active {
+  border-color: #6366f1;
+  background: #6366f1;
+  color: white;
+}
+
+.step-nav.completed {
+  border-color: #10b981;
+  background: #f0f9ff;
+}
+
+.step-nav.completed .step-icon {
+  color: #10b981;
+}
+
+.step-nav.active .step-icon {
+  color: white;
+}
+
+.step-icon {
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.step-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.step-content-container {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+  margin-bottom: 30px;
+}
+
+.step-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.step-number {
+  color: #6366f1;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.step-header h3 {
+  margin: 5px 0 0 0;
+  color: #374151;
+  font-size: 1.5rem;
+}
+
+.step-content {
+  line-height: 1.6;
+  color: #374151;
+}
+
+.step-content p {
+  margin: 0 0 15px 0;
+}
+
+.step-content ol, .step-content ul {
+  margin: 15px 0;
+  padding-left: 20px;
+}
+
+.step-content li {
+  margin: 8px 0;
+}
+
+.step-content a {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.step-content a:hover {
+  text-decoration: underline;
+}
+
+.warning {
+  padding: 15px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  margin: 15px 0;
+  color: #92400e;
+}
+
+.tip {
+  padding: 15px;
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  margin: 15px 0;
+  color: #1e40af;
+}
+
+.success {
+  padding: 15px;
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  border-radius: 6px;
+  margin: 15px 0;
+  color: #065f46;
+}
+
+.step-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.nav-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-button.prev {
+  background: #6b7280;
+  color: white;
+}
+
+.nav-button.prev:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.nav-button.next {
+  background: #6366f1;
+  color: white;
+}
+
+.nav-button.next:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.nav-button:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.alternative-solutions {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 30px;
+  border: 1px solid #e9ecef;
+}
+
+.alternative-solutions h3 {
+  margin: 0 0 20px 0;
+  color: #374151;
+  text-align: center;
+}
+
+.alternatives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.alternative {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s;
+}
+
+.alternative:hover {
+  border-color: #6366f1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alternative h4 {
+  margin: 0 0 10px 0;
+  color: #374151;
+  font-size: 1.1rem;
+}
+
+.alternative p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .system-audio-guide {
+    padding: 15px;
+  }
+  
+  .guide-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .steps-navigation {
+    grid-template-columns: 1fr;
+  }
+  
+  .step-content-container {
+    padding: 20px;
+  }
+  
+  .step-navigation {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .alternatives-grid {
+    grid-template-columns: 1fr;
+  }
+}

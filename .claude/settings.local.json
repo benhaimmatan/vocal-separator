@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(open http://localhost:5174)",
+      "Bash(python:*)",
+      "Bash(chmod:*)",
+      "Bash(./restart_server.sh:*)",
+      "Bash(rg:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
+    ],
+    "deny": []
+  }
+}

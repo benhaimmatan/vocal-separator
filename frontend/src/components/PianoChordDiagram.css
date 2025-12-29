@@ -1,0 +1,123 @@
+.piano-chord-diagram {
+  margin-top: 0;
+  padding: 0;
+  background: transparent !important;
+  border-radius: 0;
+  box-shadow: none;
+  text-align: center;
+}
+
+.piano-keys-container {
+  position: relative;
+  width: 280px;
+  height: 120px;
+  margin: 0 auto 1rem auto;
+  background: transparent;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid #dee2e6;
+}
+
+.piano-keys.white-keys {
+  display: flex;
+  position: relative;
+  z-index: 1;
+  height: 100px;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.piano-keys.black-keys {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 100%;
+  height: 65px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* White Keys - Realistic Piano Look */
+.piano-key.white {
+  flex: 1;
+  height: 100px;
+  background: linear-gradient(to bottom, #ffffff, #f8f9fa) !important;
+  border: 1px solid #adb5bd !important;
+  border-radius: 0 0 8px 8px;
+  position: relative;
+  margin: 0;
+  transition: all 0.15s ease;
+  z-index: 1;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Black Keys - Realistic Black */
+.piano-key.black {
+  position: absolute;
+  width: 20px;
+  height: 65px;
+  background: linear-gradient(to bottom, #212529, #000000) !important;
+  border: 1px solid #000000 !important;
+  border-radius: 0 0 6px 6px;
+  transition: all 0.15s ease;
+  z-index: 2;
+  box-shadow: 
+    0 3px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateX(-50%);
+}
+
+/* Active White Keys - Bright Blue Glow */
+.piano-key.white.active {
+  background: linear-gradient(to bottom, #4dabf7, #339af0) !important;
+  border: 1px solid #228be6 !important;
+  box-shadow: 
+    0 0 20px rgba(77, 171, 247, 0.8),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px);
+}
+
+/* Active Black Keys - Bright Purple Glow */
+.piano-key.black.active {
+  background: linear-gradient(to bottom, #9775fa, #7950f2) !important;
+  border: 1px solid #7048e8 !important;
+  box-shadow: 
+    0 0 20px rgba(151, 117, 250, 0.8),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* Chord Notes Display */
+.chord-notes {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cf-gray-700) !important;
+  background: var(--cf-gray-50);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--cf-gray-200);
+  letter-spacing: 0.5px;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+}
+
+/* Hover Effects for Better Interaction */
+.piano-key.white:not(.active):hover {
+  background: linear-gradient(to bottom, #f8f9fa, #e9ecef) !important;
+  transform: translateY(-1px);
+  box-shadow: 
+    0 3px 6px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.piano-key.black:not(.active):hover {
+  background: linear-gradient(to bottom, #343a40, #212529) !important;
+  transform: translateX(-50%) translateY(-1px);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+} 

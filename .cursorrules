@@ -1,0 +1,316 @@
+# Cursor Rules for AudioAlchemy Project
+
+## Critical Development Server Management
+### ALWAYS verify correct server setup before making changes:
+
+1. **Kill all existing dev servers first**:
+   ```bash
+   pkill -f "node.*vite"
+   ```
+
+2. **Check for multiple servers**:
+   ```bash
+   ps aux | grep -E "(vite|node)" | grep -v grep
+   lsof -i :5173 -i :5174 -i :5175 -i :5176 -i :5177
+   ```
+
+3. **Start only ONE clean server**:
+   ```bash
+   cd frontend && npm run dev
+   ```
+
+4. **Verify correct port and connections**:
+   ```bash
+   lsof -i :5173  # Should show browser connections to this port
+   ```
+
+## CSS Conflicts Prevention
+### CRITICAL: Avoid duplicate CSS definitions between main and components directories:
+
+1. **Main layout CSS**: `/frontend/src/ChordFinder.css` (authoritative)
+2. **Components CSS**: `/frontend/src/components/ChordFinder.css` (DELETED - DO NOT RECREATE)
+3. **NEVER duplicate**: `.chord-finder-root`, `.lyrics-chords-container` grid layouts
+4. **Import order matters**: Components CSS loads after main CSS and overrides it
+5. **LyricsWithChords imports**: `import '../ChordFinder.css'` (main CSS, NOT components)
+
+## File Path Verification
+### ALWAYS verify which files are actually being used:
+
+1. **Check imports in App.tsx**:
+   - `import ChordFinder from './ChordFinder'` = uses `/frontend/src/ChordFinder.tsx`
+   - `import ChordFinder from './components/ChordFinder'` = uses `/frontend/src/components/ChordFinder.tsx`
+
+2. **Before editing, grep for actual imports**:
+   ```bash
+   grep -r "import.*ChordFinder" frontend/src/
+   ```
+
+3. **Test changes immediately with visible modifications**:
+   - Add console.log statements
+   - Add temporary colored banners
+   - Check browser dev tools for updates
+
+## Backend Requirements
+### CRITICAL: Backend server location and startup:
+
+1. **Backend main.py is in backend/ directory, NOT root**:
+   ```bash
+   cd backend && python3 main.py  # ✅ Correct location
+   python3 main.py               # ❌ Wrong - no main.py in root
+   ```
+
+2. **NEVER waste time looking for main.py in root directory**
+3. **Always start backend from backend/ subdirectory**
+
+### Python command differences:
+
+1. **Use python3, not python**:
+   ```bash
+   python3 main.py  # ✅ Correct
+   python main.py   # ❌ Fails on this system
+   ```
+
+2. **Verify backend is running**:
+   ```bash
+   curl -s http://localhost:8000/api/library | head -c 100
+   ```
+
+## Change Verification Workflow
+### MANDATORY steps after any code change:
+
+1. **Hard refresh browser** (Cmd+Shift+R on Mac)
+2. **Check browser dev tools console** for errors
+3. **Verify server logs** show file changes being detected
+4. **Add temporary visible test change** if unsure
+5. **Remove test changes** once verified working
+
+## Port Management
+### Common port conflicts:
+
+- Frontend dev servers auto-increment ports (5173 → 5174 → 5175...)
+- Browser may cache old port connections
+- Always verify browser is connected to the ACTIVE server port
+
+## File Structure Awareness
+### Key files and their purposes:
+
+- `/frontend/src/ChordFinder.tsx` - Root level component (used by App.tsx)
+- `/frontend/src/components/ChordFinder.tsx` - **DELETED** (was causing confusion)
+- `/frontend/src/components/AudioWaveform.tsx` - Waveform component
+- `/frontend/src/App.tsx` - Main app with routing
+- `/frontend/src/components/LyricsWithChords.tsx` - Lyrics panel component
+
+## Layout Container Issues
+### CRITICAL: ChordFinder must be wrapped in proper container:
+
+1. **App.tsx Layout**: All views must be wrapped in `<div className="separator-view">`
+2. **ChordFinder Special Case**: Needs `<div className="separator-view chord-finder-view">`
+3. **Why**: `.separator-view` has `max-width: 1200px` and `padding: 20px` constraints
+4. **Solution**: `.chord-finder-view` overrides with `max-width: none; padding: 0; width: 100%`
+5. **Responsive**: Added media queries for mobile compatibility
+
+## CSS Conflicts
+### Watch for conflicting stylesheets:
+
+- `/frontend/src/ChordFinder.css` - Main styles (authoritative)
+- `/frontend/src/components/ChordFinder.css` - **DELETED** (was overriding main)
+- `/frontend/src/App.css` - App layout containers and responsive rules
+- Browser cache can prevent CSS updates - use hard refresh
+
+## Debugging Commands
+### Essential troubleshooting commands:
+
+```bash
+# Server management
+pkill -f "node.*vite"
+ps aux | grep vite
+lsof -i :5173
+
+# File verification  
+grep -r "import.*Component" frontend/src/
+find frontend/src -name "*.tsx" -exec basename {} \;
+
+# Backend verification
+python3 --version
+curl http://localhost:8000/api/library
+
+# Change detection
+git status
+git diff
+```
+
+## Never Assume
+### ALWAYS verify:
+
+1. ✅ Correct file being edited
+2. ✅ Correct server running
+3. ✅ Browser on correct port
+4. ✅ Backend responding
+5. ✅ Changes are visible immediately
+6. ✅ No CSS conflicts between main and components directories
+
+## Emergency Reset Procedure
+### If nothing works:
+
+```bash
+# 1. Kill everything
+pkill -f "node.*vite"
+pkill -f "python.*main.py"
+
+# 2. Clean start
+cd frontend && npm run dev &
+cd backend && python3 main.py &
+
+# 3. Verify ports
+lsof -i :5173 :8000
+
+# 4. Test with visible change
+# Add colored banner to confirm
+```
+
+## Specific Issues Resolved
+### Multiple Server Problem:
+- **Symptom**: Changes not appearing in browser
+- **Cause**: Multiple Vite servers running on different ports
+- **Solution**: Kill all servers, start only one
+- **Detection**: `lsof -i :5173 -i :5174 -i :5175 -i :5176 -i :5177`
+
+### CSS Override Problem:
+- **Symptom**: Lyrics panel missing or positioned incorrectly
+- **Cause**: Components CSS overriding main CSS layout
+- **Solution**: Delete components CSS, use main CSS only
+- **Prevention**: Never create duplicate CSS files
+
+### File Import Confusion:
+- **Symptom**: Editing wrong files, changes not applying
+- **Cause**: Multiple files with same name in different directories
+- **Solution**: Check imports with grep, delete unused files
+- **Prevention**: Use unique filenames or clear directory structure
+
+### Layout Container Problem:
+- **Symptom**: Lyrics panel not visible, layout compressed or not responsive
+- **Cause**: ChordFinder not wrapped in proper container with responsive CSS
+- **Solution**: Wrap in `<div className="separator-view chord-finder-view">` with overrides
+- **Prevention**: All views must have consistent container structure
+
+### ChordFinder Design Requirements:
+- **Wider Sidebar**: 320px sidebar to show full song names without wrapping
+- **No Subtext**: Remove track type descriptions like "Original.. used for chord detection"
+- **Lyrics-Centered**: Lyrics are the main central content when chords are detected
+- **Waveform in Sidebar**: Audio waveform moved to compact position in sidebar
+- **Current Chord Panel**: Dedicated right panel with piano diagram when chords active
+- **No Chord Progression**: Removed timeline-based chord progression section
+- **Piano Integration**: Use PianoChordDiagram component for visual chord representation
+
+**REMEMBER**: 
+1. Multiple development servers running simultaneously is the #1 cause of "changes not appearing" issues!
+2. CSS conflicts between main and components directories is the #2 cause of layout issues!
+3. Always check import order and CSS specificity when styles don't apply!
+4. The components ChordFinder.css file was DELETED and should NOT be recreated!
+5. LyricsWithChords component imports from '../ChordFinder.css' (main CSS file)!
+6. ChordFinder MUST be wrapped in `separator-view chord-finder-view` container!
+7. ChordFinder sidebar should be 320px to accommodate full song names!
+8. Lyrics should be the main central content with dedicated area!
+9. Waveform should be compact and positioned in sidebar, not central!
+10. **BACKEND main.py is in backend/ directory - NEVER look in root directory!**
+
+## CSS Layout & Text Truncation Issues - CRITICAL LESSONS LEARNED
+### Text Truncation Problem Pattern:
+
+**SYMPTOM**: Text showing "..." instead of full content
+**ROOT CAUSE**: Container width constraints, not text CSS properties
+**SOLUTION APPROACH**: Fix container sizing FIRST, then text properties
+
+### Step-by-Step Debugging Process:
+
+1. **FIRST: Check container hierarchy widths**:
+   ```javascript
+   // Add temporary debug logging
+   console.log('Container widths:', {
+     root: element.offsetWidth,
+     parent: element.parentElement.offsetWidth,
+     computed: window.getComputedStyle(element).width
+   });
+   ```
+
+2. **SECOND: Add visual debugging borders**:
+   ```css
+   .container { border: 3px solid red !important; }
+   .text-element { border: 2px solid yellow !important; }
+   ```
+
+3. **THIRD: Check CSS grid/flexbox constraints**:
+   - `grid-template-columns` values
+   - `max-width` constraints
+   - `flex-shrink` settings
+   - Responsive media queries
+
+### Common CSS Grid Sizing Mistakes:
+
+❌ **WRONG**: Fixed pixel widths
+```css
+grid-template-columns: 800px 1fr;  /* Too narrow for long content */
+```
+
+✅ **CORRECT**: Content-based sizing
+```css
+grid-template-columns: auto 1fr;   /* Sizes to content */
+```
+
+### Text Truncation CSS Rules Priority:
+
+1. **Container width** (most important)
+2. **Parent flex/grid constraints**
+3. **Text overflow properties** (least important)
+
+### CSS Specificity for Overrides:
+
+**Use maximum specificity when overriding**:
+```css
+.parent-class.specific-class .child-element {
+  property: value !important;
+}
+```
+
+### Responsive Design Considerations:
+
+**ALWAYS check media queries** - they often override main CSS:
+```css
+@media (max-width: 1200px) {
+  .sidebar { width: 300px; }  /* May be too narrow */
+}
+```
+
+### Quick Fix Template for Text Truncation:
+
+1. **Identify the constraining container**
+2. **Use auto-sizing instead of fixed widths**:
+   ```css
+   .container {
+     width: auto !important;
+     max-width: none !important;
+     grid-template-columns: auto 1fr !important;
+   }
+   ```
+3. **Prevent text truncation**:
+   ```css
+   .text-element {
+     white-space: nowrap !important;
+     overflow: visible !important;
+     text-overflow: unset !important;
+   }
+   ```
+
+### Visual Debugging Best Practices:
+
+1. **Use colored borders** to see container boundaries
+2. **Log actual pixel widths** to console
+3. **Test with longest content** to verify solution
+4. **Remove debug styling** after fixing
+
+### Time-Saving Approach:
+
+**DON'T**: Spend hours tweaking text CSS properties
+**DO**: Fix container width constraints first (usually solves 90% of issues)
+
+**PATTERN**: Text truncation = Container too narrow, NOT text CSS issue 

@@ -1,0 +1,428 @@
+/* ===== CLEAN METRONOME DESIGN ===== */
+
+.metronome-container {
+  background: var(--cf-white) !important;
+  border: 1px solid var(--cf-gray-200);
+  border-radius: var(--cf-radius-lg);
+  padding: var(--cf-space-4);
+  margin-top: var(--cf-space-4);
+  font-family: var(--cf-font-family);
+  color: var(--cf-gray-900) !important;
+  box-shadow: var(--cf-shadow-sm);
+  transition: var(--cf-transition);
+}
+
+/* Header with Clean Toggle */
+.metronome-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--cf-space-4);
+  padding-bottom: var(--cf-space-3);
+  border-bottom: 1px solid var(--cf-gray-200);
+}
+
+.metronome-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cf-gray-700) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Clean Toggle Design - Enhanced Visibility */
+.metronome-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--cf-space-2);
+  cursor: pointer;
+}
+
+.metronome-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 50px; /* Slightly wider for better visibility */
+  height: 26px; /* Slightly taller */
+  background-color: #cbd5e1; /* Darker gray for better contrast */
+  border: 2px solid #94a3b8; /* Border for definition */
+  border-radius: 26px;
+  transition: all 0.3s ease;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px; /* Adjusted for new size */
+  width: 20px;
+  left: 2px;
+  top: 2px;
+  background-color: white;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3); /* Stronger shadow */
+}
+
+.metronome-toggle input:checked + .toggle-slider {
+  background-color: #22c55e; /* Green for ON state */
+  border-color: #16a34a;
+}
+
+.metronome-toggle input:checked + .toggle-slider:before {
+  transform: translateX(24px); /* Adjusted for new width */
+}
+
+.toggle-label {
+  font-size: 0.8rem; /* Slightly larger */
+  font-weight: 700; /* Bolder */
+  color: var(--cf-gray-800); /* Darker for better visibility */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 30px;
+}
+
+/* Compact BPM Controls Section */
+.bpm-controls-section {
+  background: var(--cf-gray-50);
+  border: 1px solid var(--cf-gray-200);
+  border-radius: var(--cf-radius-md);
+  padding: var(--cf-space-4);
+  margin-bottom: var(--cf-space-4);
+}
+
+.bpm-display-compact {
+  text-align: center;
+  margin-bottom: var(--cf-space-4);
+}
+
+.bpm-number-compact {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--cf-primary) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cf-space-1);
+}
+
+.bpm-label {
+  font-size: 0.75rem;
+  color: var(--cf-gray-600) !important;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.bpm-status {
+  font-size: 0.75rem;
+  color: var(--cf-warning);
+  margin-top: var(--cf-space-1);
+}
+
+/* Inline BPM Adjustment Controls */
+.bpm-adjustment-inline {
+  border-top: 1px solid var(--cf-gray-200);
+  padding-top: var(--cf-space-3);
+}
+
+.bpm-controls-row {
+  display: flex;
+  align-items: center;
+  gap: var(--cf-space-2);
+  margin-bottom: var(--cf-space-3);
+  flex-wrap: wrap;
+}
+
+.bpm-control-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cf-gray-700);
+  min-width: 50px;
+}
+
+.bpm-input-compact {
+  width: 70px;
+  padding: var(--cf-space-1) var(--cf-space-2);
+  border: 1px solid var(--cf-gray-300);
+  border-radius: var(--cf-radius-sm);
+  font-size: 0.875rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.correction-buttons-inline {
+  display: flex;
+  gap: var(--cf-space-1);
+}
+
+.correction-button-compact {
+  padding: var(--cf-space-1) var(--cf-space-2);
+  border: 1px solid var(--cf-gray-300);
+  border-radius: var(--cf-radius-sm);
+  background: var(--cf-white);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--cf-transition);
+  color: var(--cf-gray-700);
+  min-width: 30px;
+}
+
+.correction-button-compact:hover {
+  background: var(--cf-gray-100);
+  border-color: var(--cf-gray-400);
+}
+
+.correction-button-compact.reset {
+  background: var(--cf-primary);
+  color: white;
+  border-color: var(--cf-primary);
+}
+
+.correction-button-compact.reset:hover {
+  background: var(--cf-primary-dark);
+}
+
+/* Original BPM Display - Properly Contained */
+.original-bpm-display {
+  background: var(--cf-white);
+  border: 1px solid var(--cf-gray-200);
+  border-radius: var(--cf-radius-sm);
+  padding: var(--cf-space-2) var(--cf-space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.original-bpm-label {
+  color: var(--cf-gray-600);
+  font-weight: 500;
+}
+
+.original-bpm-value {
+  color: var(--cf-gray-900);
+  font-weight: 700;
+}
+
+/* Sound Options Section */
+.sound-options-section {
+  border-top: 1px solid var(--cf-gray-200);
+  padding-top: var(--cf-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-space-3);
+}
+
+/* Sound Toggle (separate from main toggle) */
+.sound-control-row {
+  display: flex;
+  align-items: center;
+}
+
+.sound-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--cf-space-2);
+  cursor: pointer;
+}
+
+.sound-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.sound-toggle-slider {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background-color: #e2e8f0;
+  border: 2px solid #cbd5e1;
+  border-radius: 22px;
+  transition: all 0.3s ease;
+}
+
+.sound-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  top: 2px;
+  background-color: white;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.sound-toggle input:checked + .sound-toggle-slider {
+  background-color: #3b82f6; /* Blue for sound ON */
+  border-color: #2563eb;
+}
+
+.sound-toggle input:checked + .sound-toggle-slider:before {
+  transform: translateX(18px);
+}
+
+.sound-toggle-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cf-gray-700);
+  display: flex;
+  align-items: center;
+  gap: var(--cf-space-1);
+}
+
+/* Beat Source Row */
+.beat-source-row {
+  display: flex;
+  align-items: center;
+  padding-left: var(--cf-space-2);
+}
+
+.sound-option {
+  display: flex;
+  align-items: center;
+  gap: var(--cf-space-2);
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--cf-gray-700);
+}
+
+.sound-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--cf-radius-sm);
+  border: 1px solid var(--cf-gray-300);
+}
+
+.sound-option-text {
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .bpm-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cf-space-2);
+  }
+  
+  .correction-buttons-inline {
+    justify-content: center;
+  }
+  
+  .bpm-number-compact {
+    font-size: 1.5rem;
+  }
+  
+  .original-bpm-display {
+    flex-direction: column;
+    gap: var(--cf-space-1);
+    text-align: center;
+  }
+}
+
+/* Legacy CSS - Hidden for clean design */
+.bpm-adjustment-panel,
+.bpm-display-main,
+.beat-visualization,
+.beat-source-toggle,
+.chord-timing-info,
+.metronome-debug {
+  display: none !important;
+}
+
+/* Integration with ChordFinder theme */
+.chord-finder-root .metronome-container {
+  background: var(--cf-white) !important;
+  border: 1px solid var(--cf-gray-200) !important;
+  color: var(--cf-gray-900) !important;
+}
+
+.chord-finder-root .metronome-container * {
+  color: inherit !important;
+}
+
+.chord-finder-root .metronome-header h4 {
+  color: var(--cf-gray-700) !important;
+}
+
+.chord-finder-root .bpm-number {
+  color: var(--cf-indigo-600) !important;
+}
+
+.chord-finder-root .beat-dot.active {
+  color: var(--cf-indigo-700) !important;
+}
+
+.chord-finder-root .chord-name {
+  color: var(--cf-indigo-700) !important;
+}
+
+/* Hide Metronome beat visualization when ChordProgressionBar is active */
+.chord-finder-root .metronome-container .beat-visualization {
+  display: none !important; /* Hidden to prevent overlap with ChordProgressionBar */
+}
+
+.chord-finder-root .metronome-container .beat-dot {
+  display: none !important; /* Hidden to prevent overlap with ChordProgressionBar */
+}
+
+/* Original beat visualization styles - commented out
+.beat-visualization {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.beat-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: #64748b;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.beat-dot.downbeat {
+  border-color: #dc2626;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.beat-dot.active {
+  background: #8b5cf6;
+  border-color: #7c3aed;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+}
+
+.beat-dot.pulse {
+  animation: pulse 0.3s ease-out;
+}
+*/ 

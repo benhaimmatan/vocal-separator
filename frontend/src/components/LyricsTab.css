@@ -1,0 +1,204 @@
+.lyrics-tab {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.lyrics-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.lyrics-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.lyrics-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.lyrics-loading {
+  text-align: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.lyrics-loading p {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.lyrics-error {
+  text-align: center;
+  padding: 30px;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  color: #721c24;
+}
+
+.lyrics-error p {
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+}
+
+.retry-button {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+  background: #c82333;
+}
+
+.lyrics-placeholder {
+  text-align: center;
+  padding: 60px 20px;
+  background: #e9ecef;
+  border-radius: 12px;
+  color: #6c757d;
+}
+
+.lyrics-placeholder p {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.lyrics-content {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.lyrics-stats {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 30px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.lyrics-stats span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.aligned-lyrics {
+  line-height: 2.5;
+  font-size: 1.1rem;
+}
+
+.lyric-line {
+  margin-bottom: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.lyric-line:last-child {
+  border-bottom: none;
+}
+
+.word-with-chord {
+  display: inline-block;
+  position: relative;
+  margin-right: 8px;
+  margin-bottom: 5px;
+}
+
+.chord-annotation {
+  position: absolute;
+  top: -25px;
+  left: 0;
+  background: #4caf50;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.word-text {
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.word-with-chord:hover .word-text {
+  background: #f8f9fa;
+}
+
+/* Different chord colors for visual distinction */
+.chord-annotation {
+  background: #4caf50; /* Default green */
+}
+
+.word-with-chord:nth-of-type(2n) .chord-annotation {
+  background: #2196f3; /* Blue */
+}
+
+.word-with-chord:nth-of-type(3n) .chord-annotation {
+  background: #ff9800; /* Orange */
+}
+
+.word-with-chord:nth-of-type(4n) .chord-annotation {
+  background: #9c27b0; /* Purple */
+}
+
+.word-with-chord:nth-of-type(5n) .chord-annotation {
+  background: #f44336; /* Red */
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .lyrics-tab {
+    padding: 15px;
+  }
+  
+  .lyrics-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .lyrics-stats {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .aligned-lyrics {
+    font-size: 1rem;
+    line-height: 2.2;
+  }
+  
+  .chord-annotation {
+    font-size: 0.7rem;
+    top: -22px;
+  }
+}

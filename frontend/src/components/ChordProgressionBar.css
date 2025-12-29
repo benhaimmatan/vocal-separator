@@ -1,0 +1,632 @@
+.chord-progression-bar {
+  background: var(--cf-white) !important;
+  border: 1px solid var(--cf-gray-200);
+  border-radius: var(--cf-radius-xl);
+  padding: var(--cf-space-8);
+  margin: var(--cf-space-6) 0;
+  color: var(--cf-gray-900) !important;
+  font-family: var(--cf-font-family);
+  box-shadow: var(--cf-shadow-lg);
+  transition: var(--cf-transition);
+}
+
+/* Main Container Layout */
+.chord-progression-container {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: var(--cf-space-6);
+  align-items: start;
+  background: var(--cf-white) !important;
+}
+
+
+/* Center Column - Chord Progression */
+.chord-progression-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cf-space-4);
+  background: var(--cf-white) !important;
+  padding: var(--cf-space-4);
+  border-radius: var(--cf-radius-lg);
+  border: 1px solid var(--cf-gray-200);
+  min-width: 0;
+  width: 100%;
+}
+
+.progression-header {
+  text-align: center;
+  margin-bottom: var(--cf-space-4);
+}
+
+.progression-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--cf-gray-900) !important;
+  margin: 0 0 var(--cf-space-2) 0;
+  letter-spacing: -0.025em;
+}
+
+.bpm-display {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--cf-space-1);
+  background: var(--cf-indigo-50) !important;
+  color: var(--cf-indigo-700) !important;
+  padding: var(--cf-space-2) var(--cf-space-3);
+  border-radius: var(--cf-radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--cf-indigo-200);
+}
+
+.bpm-value {
+  font-weight: 600;
+  color: var(--cf-indigo-600) !important;
+}
+
+.bpm-label {
+  color: var(--cf-indigo-500) !important;
+  font-size: 0.75rem;
+}
+
+/* Beat Counter */
+.beat-counter {
+  text-align: center;
+  margin-bottom: var(--cf-space-6);
+}
+
+.beat-number {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--cf-indigo-600) !important;
+  line-height: 1;
+  margin-bottom: var(--cf-space-1);
+}
+
+.beat-total {
+  font-size: 0.875rem;
+  color: var(--cf-gray-600) !important;
+  font-weight: 500;
+}
+
+/* Chord Sequence - Enhanced current chord */
+.chord-sequence {
+  display: flex;
+  flex-direction: row;
+  gap: var(--cf-space-2);
+  justify-content: center;
+  margin-bottom: var(--cf-space-4);
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.chord-block {
+  position: relative;
+  border-radius: var(--cf-radius-lg);
+  padding: var(--cf-space-3) var(--cf-space-4);
+  min-width: 70px;
+  text-align: center;
+  transition: var(--cf-transition);
+  border: 2px solid transparent;
+  box-shadow: var(--cf-shadow-sm);
+  flex-shrink: 1;
+  max-width: 120px;
+}
+
+.chord-block.previous {
+  background: var(--cf-gray-100) !important;
+  color: var(--cf-gray-600) !important;
+  border-color: var(--cf-gray-200);
+  opacity: 0.7;
+  transform: scale(0.9);
+}
+
+.chord-block.current {
+  background: linear-gradient(135deg, var(--cf-indigo-500), var(--cf-blue-600)) !important;
+  color: var(--cf-white) !important;
+  border-color: var(--cf-indigo-400);
+  box-shadow: var(--cf-shadow-xl);
+  transform: scale(1.15);
+  z-index: 10;
+  min-width: 90px;
+  padding: var(--cf-space-4) var(--cf-space-6);
+}
+
+.chord-block.next {
+  background: var(--cf-emerald-50) !important;
+  color: var(--cf-emerald-700) !important;
+  border-color: var(--cf-emerald-200);
+  opacity: 0.8;
+  transform: scale(0.95);
+}
+
+.chord-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: var(--cf-space-1);
+  font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+}
+
+.chord-block.current .chord-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.chord-beats {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.chord-block.current .chord-beats {
+  font-size: 0.875rem;
+  opacity: 1;
+}
+
+/* Progress bar for current chord */
+.chord-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 0 0 var(--cf-radius-lg) var(--cf-radius-lg);
+  overflow: hidden;
+}
+
+.chord-progress-fill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  transition: width 0.1s ease;
+}
+
+/* Beat Visualization */
+.beat-visualization {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: var(--cf-space-3);
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+}
+
+.beat-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cf-space-1);
+  position: relative;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.beat-dot {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--cf-gray-200) !important;
+  border: 2px solid var(--cf-gray-300);
+  transition: var(--cf-transition);
+  flex-shrink: 0;
+}
+
+/* Enhanced styling for detected vs estimated beats */
+.beat-indicator.detected .beat-dot {
+  border: 3px solid var(--cf-blue-400);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+.beat-indicator.estimated .beat-dot {
+  border: 2px dashed var(--cf-amber-400);
+  background: var(--cf-amber-50) !important;
+}
+
+.beat-indicator.completed .beat-dot {
+  background: var(--cf-emerald-500) !important;
+  border-color: var(--cf-emerald-400);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+.beat-indicator.current .beat-dot {
+  background: var(--cf-indigo-500) !important;
+  border-color: var(--cf-indigo-400);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+  transform: scale(1.15);
+}
+
+/* Timing accuracy indicator */
+.beat-indicator.timing-issue .beat-dot {
+  border: 3px solid var(--cf-red-500);
+  background: var(--cf-red-100) !important;
+  animation: warningPulse 1s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+  0%, 100% { 
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    transform: scale(1.0);
+  }
+  50% { 
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+    transform: scale(1.1);
+  }
+}
+
+.beat-progress-ring {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  mask: radial-gradient(circle, transparent 10px, black 10px);
+  -webkit-mask: radial-gradient(circle, transparent 10px, black 10px);
+}
+
+.beat-label {
+  font-size: 0.65rem;
+  color: var(--cf-gray-600) !important;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.beat-indicator.current .beat-label {
+  color: var(--cf-indigo-600) !important;
+  font-weight: 600;
+}
+
+.beat-indicator.completed .beat-label {
+  color: var(--cf-emerald-600) !important;
+  font-weight: 600;
+}
+
+.beat-indicator.timing-issue .beat-label {
+  color: var(--cf-red-600) !important;
+  font-weight: 600;
+}
+
+.beat-indicator.estimated .beat-label {
+  color: var(--cf-amber-600) !important;
+  font-style: italic;
+}
+
+/* Beat type indicator tooltip */
+.beat-indicator::before {
+  content: attr(data-beat-type);
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--cf-gray-800);
+  color: var(--cf-white);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1000;
+}
+
+.beat-indicator:hover::before {
+  opacity: 1;
+}
+
+/* Right Column - Enhanced Current Chord Display */
+.current-chord-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cf-space-4);
+  background: transparent !important;
+  padding: var(--cf-space-8);
+  border-radius: var(--cf-radius-lg);
+  border: none;
+  min-height: 400px;
+}
+
+.current-chord-section h4 {
+  margin: 0 0 var(--cf-space-4) 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cf-gray-700) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--cf-indigo-500);
+  padding-bottom: var(--cf-space-2);
+  text-align: center;
+  width: 100%;
+}
+
+.current-chord-display {
+  text-align: center;
+  padding: var(--cf-space-6);
+  background: transparent !important;
+  border-radius: 0;
+  border: none;
+  width: 100%;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.current-chord-name-large {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--cf-indigo-600) !important;
+  margin-bottom: var(--cf-space-8);
+  font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 4px rgba(99, 102, 241, 0.1);
+}
+
+.piano-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent !important;
+  border-radius: 0;
+  padding: var(--cf-space-4);
+  border: none;
+  box-shadow: none;
+  transform: scale(1.2);
+}
+
+.no-chord-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.no-chord-text {
+  font-size: 4rem;
+  font-weight: 300;
+  color: var(--cf-gray-400) !important;
+  margin-bottom: var(--cf-space-2);
+}
+
+.no-chord-subtitle {
+  font-size: 0.875rem;
+  color: var(--cf-gray-500) !important;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .chord-progression-container {
+    grid-template-columns: 1fr 300px; /* 2-column layout with smaller right column */
+    gap: var(--cf-space-4);
+  }
+  
+  .current-chord-section {
+    max-width: 300px;
+    margin: 0 auto;
+    padding: var(--cf-space-4);
+    min-height: 350px;
+  }
+  
+  .current-chord-name-large {
+    font-size: 3.5rem;
+  }
+  
+  .piano-container {
+    transform: scale(1.1);
+  }
+  
+  .chord-block {
+    min-width: 60px;
+    padding: var(--cf-space-2) var(--cf-space-3);
+  }
+  
+  .chord-block.current {
+    min-width: 80px;
+    padding: var(--cf-space-3) var(--cf-space-4);
+    transform: scale(1.1);
+  }
+}
+
+@media (max-width: 900px) {
+  .chord-progression-container {
+    grid-template-columns: 1fr; /* Single column on smaller screens */
+    gap: var(--cf-space-4);
+  }
+  
+  .current-chord-section {
+    max-width: 400px;
+    margin: 0 auto;
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chord-progression-bar {
+    padding: var(--cf-space-4);
+    margin: var(--cf-space-3) 0;
+  }
+  
+  .chord-progression-container {
+    gap: var(--cf-space-3);
+  }
+  
+  .beat-number {
+    font-size: 2.5rem;
+  }
+  
+  .chord-sequence {
+    gap: var(--cf-space-1);
+    margin-bottom: var(--cf-space-3);
+  }
+  
+  .chord-block {
+    padding: var(--cf-space-2) var(--cf-space-3);
+    min-width: 50px;
+    font-size: 0.875rem;
+  }
+  
+  .chord-block.current {
+    min-width: 70px;
+    padding: var(--cf-space-3) var(--cf-space-4);
+    transform: scale(1.05);
+  }
+  
+  .chord-name {
+    font-size: 0.875rem;
+  }
+  
+  .chord-block.current .chord-name {
+    font-size: 1rem;
+  }
+  
+  .beat-visualization {
+    gap: var(--cf-space-2);
+  }
+  
+  .beat-dot {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .current-chord-name-large {
+    font-size: 3rem;
+  }
+  
+  .piano-container {
+    transform: scale(1.0);
+  }
+  
+  .chord-progression-section,
+  .current-chord-section {
+    padding: var(--cf-space-3);
+  }
+}
+
+/* Animation for beat pulse */
+@keyframes beatPulse {
+  0% { transform: scale(1.15); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1.15); }
+}
+
+.beat-indicator.current .beat-dot {
+  animation: beatPulse 0.8s ease-in-out infinite;
+}
+
+/* Smooth transitions */
+.chord-block,
+.beat-dot,
+.beat-label,
+.current-chord-name-large {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus states for accessibility */
+.chord-block:focus,
+.beat-indicator:focus {
+  outline: 2px solid var(--cf-indigo-500);
+  outline-offset: 2px;
+}
+
+/* Force white background on all elements */
+.chord-progression-bar *,
+.chord-progression-container *,
+.chord-progression-section *,
+.current-chord-section * {
+  background-color: inherit !important;
+}
+
+/* Override any inherited dark styles */
+.chord-progression-bar,
+.chord-progression-container,
+.chord-progression-section,
+.current-chord-section {
+  background: var(--cf-white) !important;
+  color: var(--cf-gray-900) !important;
+}
+
+/* Override any inherited dark styles */
+.chord-finder-root .chord-progression-bar,
+.chord-finder-root .chord-progression-container,
+.chord-finder-root .chord-progression-section {
+  background: var(--cf-white) !important;
+  color: var(--cf-gray-900) !important;
+}
+
+.chord-finder-root .current-chord-section {
+  background: transparent !important;
+  color: var(--cf-gray-900) !important;
+}
+
+/* Maximum specificity overrides for white theme */
+.chord-finder-root .lyrics-content .chord-progression-bar {
+  background: var(--cf-white) !important;
+  color: var(--cf-gray-900) !important;
+  border: 1px solid var(--cf-gray-200) !important;
+}
+
+.chord-finder-root .lyrics-content .chord-progression-bar *,
+.chord-finder-root .chord-progression-bar *,
+.chord-progression-bar * {
+  background-color: inherit !important;
+}
+
+.chord-finder-root .lyrics-content .chord-progression-bar .analysis-controls-section,
+.chord-finder-root .lyrics-content .chord-progression-bar .chord-progression-section {
+  background: var(--cf-white) !important;
+  color: var(--cf-gray-900) !important;
+}
+
+.chord-finder-root .lyrics-content .chord-progression-bar .current-chord-section {
+  background: transparent !important;
+  color: var(--cf-gray-900) !important;
+}
+
+.chord-finder-root .lyrics-content .chord-progression-bar h3,
+.chord-finder-root .lyrics-content .chord-progression-bar h4,
+.chord-finder-root .lyrics-content .chord-progression-bar label,
+.chord-finder-root .lyrics-content .chord-progression-bar p {
+  color: var(--cf-gray-700) !important;
+  background: transparent !important;
+}
+
+.chord-finder-root .lyrics-content .chord-progression-bar .control-select,
+.chord-finder-root .lyrics-content .chord-progression-bar .control-input {
+  background: var(--cf-white) !important;
+  color: var(--cf-gray-900) !important;
+  border: 1px solid var(--cf-gray-300) !important;
+}
+
+/* Ensure buttons maintain their gradient backgrounds */
+.chord-finder-root .lyrics-content .chord-progression-bar .analyze-button {
+  background: linear-gradient(135deg, var(--cf-indigo-500), var(--cf-blue-600)) !important;
+  color: var(--cf-white) !important;
+}
+
+.chord-finder-root .lyrics-content .chord-progression-bar .chord-block.current {
+  background: linear-gradient(135deg, var(--cf-indigo-500), var(--cf-blue-600)) !important;
+  color: var(--cf-white) !important;
+}
+
+/* Ensure piano elements stay transparent */
+.chord-finder-root .lyrics-content .chord-progression-bar .current-chord-display,
+.chord-finder-root .lyrics-content .chord-progression-bar .piano-container,
+.chord-finder-root .current-chord-display,
+.chord-finder-root .piano-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+ 

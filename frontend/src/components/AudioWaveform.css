@@ -1,0 +1,249 @@
+/* ===== REDESIGNED AUDIO WAVEFORM - CONSISTENT WHITE THEME ===== */
+
+.waveform-container {
+  background: linear-gradient(135deg, #ffffff, #f8fafc) !important; /* Clean white gradient background */
+  border-radius: 12px; /* Consistent with library card radius */
+  padding: 16px; /* Consistent padding */
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06); /* Subtle elegant shadow */
+  border: 2px solid rgba(99, 102, 241, 0.6); /* Consistent purple border */
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.vocals-track {
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff) !important; /* Light purple gradient for vocals */
+  border: 2px solid rgba(99, 102, 241, 0.8) !important; /* More prominent purple border for vocals */
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15), 0 2px 6px rgba(99, 102, 241, 0.1); /* Purple-tinted shadow */
+}
+
+.vocals-track .waveform-wrapper {
+  background: rgba(99, 102, 241, 0.08) !important; /* Subtle purple tint for vocals waveform */
+}
+
+/* ===== HEADER & CONTROLS REDESIGN ===== */
+.waveform-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.15); /* Subtle purple divider */
+}
+
+.waveform-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Consistent spacing */
+  width: 100%;
+}
+
+/* ===== BUTTON REDESIGN - CONSISTENT WITH APP THEME ===== */
+.play-button, .seek-button {
+  background: rgba(99, 102, 241, 0.1) !important; /* Light purple background */
+  border: 2px solid rgba(99, 102, 241, 0.3) !important; /* Subtle purple border */
+  padding: 8px; /* Consistent padding */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4F46E5 !important; /* Consistent purple color */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition */
+  width: 36px; /* Consistent size */
+  height: 36px;
+  border-radius: 8px; /* Rounded rectangle instead of circle for consistency */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+  font-size: 0; /* Hide any text */
+}
+
+.play-button {
+  background: rgba(99, 102, 241, 0.15) !important; /* Slightly more prominent for play button */
+  border: 2px solid rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.15); /* Purple-tinted shadow */
+}
+
+.play-button:hover:not(.disabled), .seek-button:hover:not(.disabled) {
+  background: rgba(99, 102, 241, 0.2) !important;
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  transform: translateY(-1px); /* Subtle lift effect */
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
+  color: #3730A3 !important; /* Darker purple on hover */
+}
+
+.play-button:active:not(.disabled), .seek-button:active:not(.disabled) {
+  transform: translateY(0); /* Reset on click */
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.3);
+}
+
+.play-button.disabled, .seek-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: rgba(107, 114, 128, 0.1) !important; /* Gray background when disabled */
+  border-color: rgba(107, 114, 128, 0.2) !important;
+  color: #9CA3AF !important; /* Gray color when disabled */
+}
+
+.player-icon {
+  width: 18px; /* Consistent icon size */
+  height: 18px;
+  color: inherit;
+}
+
+/* ===== TEXT ELEMENTS REDESIGN ===== */
+.track-title {
+  font-size: 0.875rem; /* Consistent with app typography */
+  color: #374151 !important; /* Dark gray text for readability */
+  font-weight: 600; /* Semi-bold for hierarchy */
+  margin-right: auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.track-time {
+  font-size: 0.75rem; /* Smaller, consistent with app */
+  color: #6B7280 !important; /* Gray text for secondary info */
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-left: auto;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace; /* Monospace for time */
+  letter-spacing: 0.025em;
+  background: rgba(99, 102, 241, 0.08); /* Subtle background */
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+/* ===== WAVEFORM AREA REDESIGN ===== */
+.waveform-wrapper {
+  position: relative;
+  height: 100px; /* Optimized height */
+  margin: 0;
+  padding: 16px; /* Consistent padding */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(99, 102, 241, 0.05) !important; /* Very light purple tint */
+  border-radius: 8px; /* Consistent border radius */
+  border: 1px solid rgba(99, 102, 241, 0.2) !important; /* Subtle border */
+  box-shadow: inset 0 1px 3px rgba(99, 102, 241, 0.08); /* Subtle inset shadow */
+}
+
+.waveform {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* ===== ERROR STATES REDESIGN ===== */
+.error-message {
+  color: #DC2626 !important; /* Consistent red color */
+  font-size: 0.75rem;
+  background: rgba(239, 68, 68, 0.08) !important; /* Light red background */
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 8px;
+  font-weight: 500;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.waveform-container.error {
+  border: 2px solid rgba(239, 68, 68, 0.4) !important;
+  background: rgba(239, 68, 68, 0.05) !important;
+}
+
+/* ===== COMPACT/SMALL BUTTON VARIANTS ===== */
+.play-button-small {
+  background: rgba(99, 102, 241, 0.1) !important;
+  border: 2px solid rgba(99, 102, 241, 0.3) !important;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px; /* Smaller radius for compact version */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.play-button-small:hover {
+  background: rgba(99, 102, 241, 0.15) !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.15);
+}
+
+.player-icon-small {
+  width: 14px;
+  height: 14px;
+  color: #4F46E5 !important;
+}
+
+/* ===== HIDE SCROLL BARS ===== */
+.waveform-container::-webkit-scrollbar {
+  display: none;
+}
+
+.waveform-container * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.waveform-container *::-webkit-scrollbar {
+  display: none;
+}
+
+.track-section {
+  overflow: hidden;
+}
+
+.track-section .waveform-container {
+  overflow: hidden !important;
+}
+
+.track-section .waveform-wrapper {
+  overflow: hidden !important;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .waveform-container {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .waveform-controls {
+    gap: 8px;
+  }
+  
+  .play-button, .seek-button {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+  
+  .player-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .track-title {
+    font-size: 0.8rem;
+  }
+  
+  .track-time {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+  
+  .waveform-wrapper {
+    height: 80px;
+    padding: 12px;
+  }
+} 

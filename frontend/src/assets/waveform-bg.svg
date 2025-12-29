@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 400 Q 300 200 600 400 T 1200 400" stroke="url(#gradient1)" stroke-width="2" fill="none" opacity="0.3"/>
+  <path d="M0 450 Q 300 250 600 450 T 1200 450" stroke="url(#gradient1)" stroke-width="1.5" fill="none" opacity="0.2"/>
+  <path d="M0 350 Q 300 150 600 350 T 1200 350" stroke="url(#gradient1)" stroke-width="1.5" fill="none" opacity="0.2"/>
+  <defs>
+    <linearGradient id="gradient1" x1="0" y1="0" x2="1200" y2="0">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+</svg> 
