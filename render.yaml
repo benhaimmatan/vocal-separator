@@ -1,0 +1,33 @@
+# render.yaml - Render deployment configuration
+
+services:
+  # Backend Service
+  - type: web
+    name: vocal-separator-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "cd backend && python main.py"
+    healthCheckPath: /api/ping
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: PORT
+        value: 8000
+
+  # Frontend Service
+  - type: web
+    name: vocal-separator-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://vocal-separator-backend.onrender.com/api/*
+      - type: rewrite
+        source: /ws
+        destination: https://vocal-separator-backend.onrender.com/ws
