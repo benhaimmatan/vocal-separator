@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { AudioWaveform, Music, FileText, Layers, Settings, HelpCircle, Upload, X, Play, Pause, Download, Check, Search, Copy } from 'lucide-react';
+import { Activity, Music, FileText, Layers, Settings, HelpCircle, Upload, X, Play, Pause, Download, Check } from 'lucide-react';
 
 // API functions
 const api = {
@@ -217,7 +217,7 @@ export default function App() {
   const [error, setError] = useState(null);
 
   const navItems = [
-    { id: 'separator', icon: AudioWaveform, label: 'Separator' },
+    { id: 'separator', icon: Activity, label: 'Separator' },
     { id: 'chords', icon: Music, label: 'Chords' },
     { id: 'lyrics', icon: FileText, label: 'Lyrics' },
     { id: 'combined', icon: Layers, label: 'Combined' },
@@ -308,7 +308,7 @@ export default function App() {
       {/* Left Navigation */}
       <nav className="w-16 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4 flex-shrink-0">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-8 shadow-lg shadow-violet-500/20">
-          <AudioWaveform size={20} />
+          <Activity size={20} />
         </div>
 
         <div className="flex-1 flex flex-col items-center gap-1">
