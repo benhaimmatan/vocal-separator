@@ -51,6 +51,8 @@ async def separate_audio(
         output_dir = tempfile.mkdtemp()
         
         logger.info(f"Processing: {file.filename}")
+        logger.info(f"Input path: {input_path}")
+        logger.info(f"Output dir: {output_dir}")
         
         results = await audio_processor.process_audio(
             input_path,
@@ -61,25 +63,46 @@ async def separate_audio(
             }
         )
         
+        logger.info(f"Processing results: {results}")
+        
+        # Verify files exist
+        vocals_path = results.get('vocals')
+        accompaniment_path = results.get('accompaniment')
+        
+        if vocals_path:
+            logger.info(f"Vocals path: {vocals_path}, exists: {os.path.exists(vocals_path)}")
+        if accompaniment_path:
+            logger.info(f"Accompaniment path: {accompaniment_path}, exists: {os.path.exists(accompaniment_path)}")
+        
         os.unlink(input_path)
         
         return {
             "success": True,
-            "vocals_path": results.get('vocals'),
-            "accompaniment_path": results.get('accompaniment')
+            "vocals_path": vocals_path,
+            "accompaniment_path": accompaniment_path
         }
         
     except Exception as e:
         logger.error(f"Error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/download/{file_path:path}")
 async def download_file(file_path: str):
     """Download processed file"""
+    # Handle both /tmp/... and tmp/... paths
+    if not file_path.startswith('/'):
+        file_path = '/' + file_path
+    
+    logger.info(f"Download requested: {file_path}")
+    
     if os.path.exists(file_path):
         return FileResponse(file_path, filename=Path(file_path).name)
-    raise HTTPException(status_code=404, detail="File not found")
+    
+    logger.error(f"File not found: {file_path}")
+    raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
 
 
 @app.post("/api/chords")
