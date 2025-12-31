@@ -241,7 +241,10 @@ async def separate_audio(
         if job_id:
             supabase_client.update_job_status(job_id, "processing")
         
-        # Use Modal GPU processing if available, otherwise fallback to CPU
+        # Try Modal GPU processing first, fallback to CPU if needed
+        use_cpu_processing = False
+        modal_error = None
+        
         if MODAL_ENABLED:
             logger.info("Using Modal GPU processing")
             result = ModalClient.separate_audio(content, extract_vocals, extract_accompaniment)
@@ -275,13 +278,22 @@ async def separate_audio(
                     "processing_time": "~30 seconds (GPU accelerated)"
                 }
             else:
-                if job_id:
-                    supabase_client.update_job_status(job_id, "failed", error_message=result.get("error"))
-                raise HTTPException(status_code=500, detail=result.get("error", "GPU processing failed"))
-        
+                # Modal failed, fall back to CPU processing
+                modal_error = result.get('error')
+                logger.warning(f"Modal GPU failed: {modal_error} - falling back to CPU processing")
+                use_cpu_processing = True
         else:
-            # Fallback to CPU processing
-            logger.info("Using CPU processing (fallback)")
+            logger.info("Modal not enabled - using CPU processing")
+            use_cpu_processing = True
+        
+        # CPU processing (either fallback or primary)
+        if use_cpu_processing:
+            if modal_error:
+                logger.info("Using CPU processing (Modal GPU fallback)")
+                if job_id:
+                    supabase_client.update_job_status(job_id, "processing", {"fallback": f"CPU processing due to GPU failure: {modal_error}"})
+            else:
+                logger.info("Using CPU processing")
             
             # Save uploaded file
             with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp:
@@ -305,12 +317,14 @@ async def separate_audio(
             if job_id:
                 supabase_client.update_job_status(job_id, "completed", results)
             
+            processing_time = "5-10 minutes (CPU fallback)" if modal_error else "5-10 minutes (CPU processing)"
+            
             return {
                 "success": True,
                 "job_id": job_id,
                 "vocals_path": results.get("vocals"),
                 "accompaniment_path": results.get("accompaniment"),
-                "processing_time": "5-10 minutes (CPU fallback)"
+                "processing_time": processing_time
             }
         
     except Exception as e:
