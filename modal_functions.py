@@ -69,17 +69,35 @@ def separate_audio_gpu(audio_data: bytes, extract_vocals: bool = True, extract_a
             with open(input_file, "wb") as f:
                 f.write(audio_data)
             
-            # Load and process audio with Demucs
-            separator = demucs.api.Separator(model="htdemucs")
-            origin, separated = separator.separate_audio_file(str(input_file))
+            # Load and process audio with Demucs using lower-level API
+            from demucs.pretrained import get_model
+            from demucs.apply import apply_model
+            from demucs.separate import load_track
             
+            # Load model
+            model = get_model("htdemucs")
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model.to(device)
+            
+            # Load audio
+            wav = load_track(str(input_file), model.audio_channels, model.samplerate)
+            
+            # Apply separation
+            ref = wav.mean(0)
+            wav = (wav - ref.mean()) / ref.std()
+            sources = apply_model(model, wav[None], device=device, overlap=0.25)[0]
+            sources = sources * ref.std() + ref.mean()
+            
+            # Get source names from model
+            source_names = model.sources
             result_paths = {}
             
             # Extract vocals if requested
-            if extract_vocals and "vocals" in separated:
+            if extract_vocals and "vocals" in source_names:
+                vocals_idx = source_names.index("vocals")
+                vocals_audio = sources[vocals_idx].cpu()
                 vocals_path = temp_path / "vocals.wav"
-                vocals_audio = separated["vocals"].cpu()
-                torchaudio.save(str(vocals_path), vocals_audio, separator.samplerate)
+                torchaudio.save(str(vocals_path), vocals_audio, model.samplerate)
                 
                 # Read the vocals file and return as bytes
                 with open(vocals_path, "rb") as f:
@@ -88,14 +106,13 @@ def separate_audio_gpu(audio_data: bytes, extract_vocals: bool = True, extract_a
             # Extract accompaniment if requested  
             if extract_accompaniment:
                 # Accompaniment is everything except vocals
-                accompaniment = origin
-                for stem_name, stem_audio in separated.items():
-                    if stem_name != "vocals":
-                        continue
-                    accompaniment = accompaniment - stem_audio
+                accompaniment = wav
+                if "vocals" in source_names:
+                    vocals_idx = source_names.index("vocals")
+                    accompaniment = wav - sources[vocals_idx]
                 
                 accompaniment_path = temp_path / "accompaniment.wav"
-                torchaudio.save(str(accompaniment_path), accompaniment.cpu(), separator.samplerate)
+                torchaudio.save(str(accompaniment_path), accompaniment.cpu(), model.samplerate)
                 
                 # Read the accompaniment file and return as bytes
                 with open(accompaniment_path, "rb") as f:
