@@ -27,8 +27,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend files
+# Copy backend files and modal functions
 COPY backend/ ./backend/
+COPY modal_functions.py ./
 COPY --from=frontend-builder /app/frontend/dist ./static/
 
 # Copy nginx config
