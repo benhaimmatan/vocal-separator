@@ -1,168 +1,161 @@
-# Deployment Guide
+# 🚀 Deployment Guide - Modern Vocal Separator
 
-## Architecture Overview
+This guide walks you through deploying the complete modern architecture with Modal GPU processing and Supabase authentication.
 
-This vocal separator app uses a modern, scalable architecture:
+## 📋 Prerequisites
 
-- **Frontend**: Streamlit (deployed on HuggingFace Spaces)
-- **Database**: Supabase (PostgreSQL + Auth)
-- **GPU Processing**: Modal.com (for heavy Demucs processing)
+1. **Modal Account**: Sign up at [modal.com](https://modal.com)
+2. **Supabase Project**: Create project at [supabase.com](https://supabase.com)
+3. **HuggingFace Spaces**: Your app repository
 
-## Setup Instructions
+## 🔧 Step 1: Set Up Modal GPU Functions
 
-### 1. Supabase Setup
-
-1. Go to [supabase.com](https://supabase.com) and create a free account
-2. Create a new project
-3. Go to Settings > API and copy:
-   - `Project URL` (SUPABASE_URL)
-   - `anon public` key (SUPABASE_ANON_KEY)
-
-#### Database Schema Setup
-
-Run these SQL commands in your Supabase SQL editor:
-
-```sql
--- user_profiles table (extends auth.users)
-CREATE TABLE user_profiles (
-    id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
-    email TEXT,
-    full_name TEXT,
-    avatar_url TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable RLS
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-
--- Policy: Users can view and edit their own profile
-CREATE POLICY "Users can view own profile" ON user_profiles
-    FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile" ON user_profiles
-    FOR UPDATE USING (auth.uid() = id);
-
--- processing_jobs table
-CREATE TABLE processing_jobs (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    job_type TEXT NOT NULL, -- 'vocal_separation', 'chord_detection', 'lyrics'
-    status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'processing', 'completed', 'failed'
-    input_file_url TEXT,
-    output_files JSONB,
-    metadata JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable RLS
-ALTER TABLE processing_jobs ENABLE ROW LEVEL SECURITY;
-
--- Policy: Users can only see their own jobs
-CREATE POLICY "Users can view own jobs" ON processing_jobs
-    FOR ALL USING (auth.uid() = user_id);
-
--- Create indexes
-CREATE INDEX idx_processing_jobs_user_id ON processing_jobs(user_id);
-CREATE INDEX idx_processing_jobs_status ON processing_jobs(status);
-CREATE INDEX idx_processing_jobs_created_at ON processing_jobs(created_at);
+### Install Modal CLI
+```bash
+pip install modal
 ```
 
-### 2. Modal.com Setup
+### Get Modal Token
+```bash
+modal token new
+```
 
-1. Go to [modal.com](https://modal.com) and create an account
-2. Install Modal CLI: `pip install modal`
-3. Authenticate: `modal token new`
-4. Deploy your functions: `modal deploy backend/modal_gpu.py`
+### Deploy Functions
+```bash
+python deploy_modal.py
+```
 
-### 3. HuggingFace Spaces Deployment
+### Get Modal Credentials
+After deployment, get your credentials:
+- `MODAL_TOKEN_ID`: From your Modal dashboard
+- `MODAL_TOKEN_SECRET`: From your Modal dashboard
 
-1. Go to [huggingface.co/spaces](https://huggingface.co/spaces)
-2. Create a new Space with:
-   - **SDK**: Streamlit
-   - **Hardware**: CPU Basic (free)
+## 🗄️ Step 2: Set Up Supabase Database
 
-3. In your Space settings, go to **Variables and secrets** and add:
-   ```
-   SUPABASE_URL=your_supabase_project_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   MODAL_TOKEN_ID=your_modal_token_id
-   MODAL_TOKEN_SECRET=your_modal_token_secret
-   ```
+### 1. Create Supabase Project
+- Go to [supabase.com](https://supabase.com)
+- Create new project
+- Wait for setup to complete
 
-4. Push your code to the Space repository
+### 2. Run Database Setup
+- Open Supabase SQL Editor
+- Copy contents of `supabase_setup.sql`
+- Execute the SQL commands
 
-### 4. Environment Variables
+### 3. Get Supabase Credentials
+From your Supabase project settings:
+- `SUPABASEURL`: Your project URL
+- `SUPABASEKEY`: Your anon/public key (not service key)
 
-Create a `.env` file for local development:
+### 4. Configure Authentication
+In Supabase Dashboard:
+- Go to Authentication > Settings
+- Configure any additional auth providers if needed
+- Set JWT expiry (recommended: 7 days)
+
+## ⚙️ Step 3: Configure HuggingFace Spaces
+
+### Set Environment Variables
+In your HuggingFace Spaces settings, add:
 
 ```env
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-MODAL_TOKEN_ID=your_modal_token_id
-MODAL_TOKEN_SECRET=your_modal_token_secret
+# Supabase Configuration
+SUPABASEURL=https://your-project.supabase.co
+SUPABASEKEY=your-anon-key
+
+# Modal Configuration (optional - enables GPU processing)
+MODAL_TOKEN_ID=your-modal-token-id
+MODAL_TOKEN_SECRET=your-modal-token-secret
 ```
 
-## Key Benefits
+### Restart Your Space
+- Click "Restart this Space" to apply environment variables
+- Monitor logs for successful startup
 
-### Why This Architecture?
+## ✅ Step 4: Verify Deployment
 
-1. **Supabase (Database + Auth)**
-   - ✅ Real PostgreSQL database (not just text files)
-   - ✅ Built-in authentication (Google login, forgot password, etc.)
-   - ✅ Row-level security for data protection
-   - ✅ Real-time subscriptions
-   - ✅ Free tier: 2 free projects, 500MB database
+### Check Health Endpoint
+Visit: `https://your-space-url/api/health`
 
-2. **HuggingFace Spaces (Frontend)**
-   - ✅ Free CPU hosting for Streamlit
-   - ✅ Automatic deployments from git
-   - ✅ Built-in secrets management
-   - ✅ Public shareable URLs
-
-3. **Modal.com (GPU Processing)**
-   - ✅ $30/month free credits (enough for hobby projects)
-   - ✅ True GPU acceleration (30-second processing vs 5-10 minutes)
-   - ✅ Auto-scaling (only pay when processing)
-   - ✅ A10G GPUs for heavy audio processing
-
-### Cost Breakdown
-
-- **Supabase**: $0/month (free tier)
-- **HuggingFace**: $0/month (free CPU hosting)
-- **Modal**: $0-30/month (free credits, only charged on usage)
-
-**Total**: $0/month for typical hobby usage!
-
-## Local Development
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your credentials
-
-# Run locally
-streamlit run streamlit_app.py
+Expected response:
+```json
+{
+  "status": "healthy",
+  "modal_enabled": true,
+  "supabase_enabled": true
+}
 ```
 
-## Production Deployment
+### Test Features
+1. **Authentication**: Try registering a new user
+2. **GPU Processing**: Upload audio file for separation
+3. **Job History**: Check processing jobs in user menu
 
-Simply push to your HuggingFace Space repository:
+## 🎯 Architecture Overview
 
-```bash
-git add .
-git commit -m "Deploy new version"
-git push origin main
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React Frontend │    │  FastAPI Backend │    │   Modal GPU     │
+│                 │    │                 │    │                 │
+│ • Authentication│────│ • Auth endpoints│────│ • Demucs (30s)  │
+│ • Job History   │    │ • Job tracking  │    │ • Chord detect  │
+│ • File Upload   │    │ • Orchestration │    │ • Fallback CPU  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                │
+                       ┌─────────────────┐
+                       │   Supabase DB   │
+                       │                 │
+                       │ • User profiles │
+                       │ • Job history   │
+                       │ • Authentication│
+                       └─────────────────┘
 ```
 
-The Space will automatically rebuild and deploy.
+## 🐛 Troubleshooting
 
-## Monitoring
+### Modal Not Working
+- Check `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` are set
+- Verify Modal functions deployed successfully
+- App falls back to CPU processing if Modal unavailable
 
-- **Supabase**: Built-in analytics dashboard
-- **Modal**: Usage dashboard shows GPU time and costs
-- **HuggingFace**: Basic metrics in Space settings
+### Supabase Not Working
+- Verify `SUPABASEURL` and `SUPABASEKEY` are correct
+- Check database tables were created successfully
+- Review Supabase logs for errors
+
+### Authentication Issues
+- Ensure Supabase RLS policies are enabled
+- Check JWT token expiry settings
+- Verify user registration is enabled in Supabase
+
+### General Issues
+- Check HuggingFace Spaces logs
+- Verify all environment variables are set
+- Test `/api/health` endpoint
+
+## 📊 Performance Expectations
+
+- **GPU Processing**: ~30 seconds for vocal separation
+- **CPU Fallback**: 5-10 minutes for vocal separation
+- **User Registration**: Instant
+- **Job History**: Real-time updates
+
+## 🔒 Security Features
+
+- ✅ JWT-based authentication
+- ✅ Row Level Security (RLS)
+- ✅ Secure token storage
+- ✅ Input validation
+- ✅ CORS protection
+
+## 🎉 Success!
+
+Your modern vocal separator app is now deployed with:
+- ⚡ GPU-accelerated processing
+- 🔐 User authentication
+- 📊 Job tracking
+- 🎨 Professional UI
+- 🚀 Scalable architecture
+
+Enjoy your 30-second vocal separations! 🎵
