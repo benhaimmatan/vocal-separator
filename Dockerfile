@@ -40,7 +40,7 @@ RUN echo '#!/bin/bash\n\
 nginx &\n\
 \n\
 # Start FastAPI server\n\
-cd /app && python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
+cd /app && PYTHONPATH=/app python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 

@@ -7,9 +7,9 @@ from pathlib import Path
 import logging
 import asyncio
 
-from processor import AudioProcessor
-from chord_detector_advanced import AdvancedChordDetector
-from lyrics_utils import get_lyrics_for_song, clean_lyrics
+from .processor import AudioProcessor
+from .chord_detector_advanced import AdvancedChordDetector
+from .lyrics_utils import get_lyrics_for_song, clean_lyrics
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
