@@ -415,7 +415,7 @@ async def detect_chords(
             result = chord_detector.detect_chords_advanced(
                 tmp_path,
                 simplicity_preference=simplicity_preference,
-                bpm_override=bmp_override
+                bpm_override=bpm_override
             )
             
             # Extract chords from result for compatibility
