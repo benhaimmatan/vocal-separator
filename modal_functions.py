@@ -11,6 +11,9 @@ import modal
 # Create Modal app
 app = modal.App("vocal-separator-gpu")
 
+# For production deployment, we'll reference the already deployed functions
+PRODUCTION_MODE = os.getenv("MODAL_ENVIRONMENT") == "production"
+
 # Define the container image with all audio processing dependencies
 image = (
     modal.Image.debian_slim(python_version="3.10")
@@ -198,11 +201,31 @@ class ModalClient:
     @staticmethod
     def separate_audio(audio_data: bytes, extract_vocals: bool = True, extract_accompaniment: bool = True) -> dict:
         """Call Modal GPU function to separate audio"""
+        try:
+            # Try to use the deployed app's function
+            deployed_app = modal.App.lookup("vocal-separator-gpu")
+            separate_func = deployed_app.function_definitions.get("separate_audio_gpu")
+            if separate_func:
+                return separate_func.remote(audio_data, extract_vocals, extract_accompaniment)
+        except Exception as e:
+            print(f"Failed to use deployed function: {e}")
+        
+        # Fallback to direct function call
         return separate_audio_gpu.remote(audio_data, extract_vocals, extract_accompaniment)
     
     @staticmethod  
     def detect_chords(audio_data: bytes) -> dict:
         """Call Modal GPU function to detect chords"""
+        try:
+            # Try to use the deployed app's function
+            deployed_app = modal.App.lookup("vocal-separator-gpu")
+            chord_func = deployed_app.function_definitions.get("detect_chords_gpu")
+            if chord_func:
+                return chord_func.remote(audio_data)
+        except Exception as e:
+            print(f"Failed to use deployed function: {e}")
+            
+        # Fallback to direct function call
         return detect_chords_gpu.remote(audio_data)
 
 if __name__ == "__main__":
