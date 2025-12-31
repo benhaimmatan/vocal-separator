@@ -16,7 +16,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY backend/ ./backend/
 COPY streamlit_app.py .
-COPY .streamlit/ ./.streamlit/
 
 # Create Streamlit config directory
 RUN mkdir -p .streamlit
