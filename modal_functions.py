@@ -201,32 +201,46 @@ class ModalClient:
     @staticmethod
     def separate_audio(audio_data: bytes, extract_vocals: bool = True, extract_accompaniment: bool = True) -> dict:
         """Call Modal GPU function to separate audio"""
-        try:
-            # Try to use the deployed app's function
-            deployed_app = modal.App.lookup("vocal-separator-gpu")
-            separate_func = deployed_app.function_definitions.get("separate_audio_gpu")
-            if separate_func:
-                return separate_func.remote(audio_data, extract_vocals, extract_accompaniment)
-        except Exception as e:
-            print(f"Failed to use deployed function: {e}")
+        import modal
         
-        # Fallback to direct function call
-        return separate_audio_gpu.remote(audio_data, extract_vocals, extract_accompaniment)
+        try:
+            # Reference the deployed app and its functions
+            app_ref = modal.App("vocal-separator-gpu")
+            
+            # Get function handles from the deployed app
+            separate_func = modal.Function.lookup("vocal-separator-gpu", "separate_audio_gpu")
+            
+            # Call the deployed function
+            return separate_func.remote(audio_data, extract_vocals, extract_accompaniment)
+            
+        except Exception as e:
+            print(f"Failed to call Modal function: {e}")
+            return {
+                "success": False,
+                "error": f"Modal GPU processing failed: {str(e)}",
+                "message": "Falling back to CPU processing recommended"
+            }
     
     @staticmethod  
     def detect_chords(audio_data: bytes) -> dict:
         """Call Modal GPU function to detect chords"""
+        import modal
+        
         try:
-            # Try to use the deployed app's function
-            deployed_app = modal.App.lookup("vocal-separator-gpu")
-            chord_func = deployed_app.function_definitions.get("detect_chords_gpu")
-            if chord_func:
-                return chord_func.remote(audio_data)
-        except Exception as e:
-            print(f"Failed to use deployed function: {e}")
+            # Reference the deployed app and its functions  
+            chord_func = modal.Function.lookup("vocal-separator-gpu", "detect_chords_gpu")
             
-        # Fallback to direct function call
-        return detect_chords_gpu.remote(audio_data)
+            # Call the deployed function
+            return chord_func.remote(audio_data)
+            
+        except Exception as e:
+            print(f"Failed to call Modal function: {e}")
+            return {
+                "success": False,
+                "error": f"Modal GPU processing failed: {str(e)}",
+                "chords": [],
+                "message": "Falling back to CPU processing recommended"
+            }
 
 if __name__ == "__main__":
     # Deploy the Modal app
