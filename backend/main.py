@@ -21,12 +21,28 @@ try:
     import os
     # Add the project root to Python path for modal_functions import
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from modal_functions import ModalClient
-    MODAL_ENABLED = True
-    print("Modal GPU processing enabled")
+    
+    # Check for Modal credentials using user's variable names
+    modal_token_id = os.getenv("MODALTOKENID")
+    modal_token_secret = os.getenv("MODALTOKENSECRET")
+    
+    if modal_token_id and modal_token_secret:
+        # Set standard Modal environment variables
+        os.environ["MODAL_TOKEN_ID"] = modal_token_id
+        os.environ["MODAL_TOKEN_SECRET"] = modal_token_secret
+        
+        from modal_functions import ModalClient
+        MODAL_ENABLED = True
+        print("Modal GPU processing enabled")
+    else:
+        MODAL_ENABLED = False
+        print("Modal credentials not found - falling back to CPU")
 except ImportError as e:
     MODAL_ENABLED = False
     print(f"Modal GPU processing disabled - falling back to CPU: {e}")
+except Exception as e:
+    MODAL_ENABLED = False
+    print(f"Modal initialization failed: {e}")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -16,12 +16,12 @@ class SupabaseClient:
     """Supabase client for database operations"""
     
     def __init__(self):
-        # Get Supabase credentials from environment
+        # Get Supabase credentials from environment (using user's variable names)
         self.supabase_url = os.getenv("SUPABASEURL")
-        self.supabase_key = os.getenv("SUPABASEKEY") or os.getenv("SUPABASEANONKEY")
+        self.supabase_key = os.getenv("SUPABASEANONKEY")
         
         if not self.supabase_url or not self.supabase_key:
-            raise ValueError("Missing Supabase credentials. Set SUPABASEURL and SUPABASEKEY environment variables.")
+            raise ValueError("Missing Supabase credentials. Set SUPABASEURL and SUPABASEANONKEY environment variables.")
         
         # Create Supabase client
         self.supabase: Client = create_client(self.supabase_url, self.supabase_key)
