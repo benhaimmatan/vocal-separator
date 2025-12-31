@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 from backend.supabase_client import get_supabase_client
-from backend.lyrics_utils import get_lyrics
+from backend.lyrics_utils import get_lyrics_for_song
 
 # Page configuration
 st.set_page_config(
@@ -158,7 +158,7 @@ def fetch_lyrics(artist, song):
     """Fetch lyrics for a song"""
     with st.spinner("Fetching lyrics..."):
         try:
-            lyrics = get_lyrics(song, artist)
+            lyrics = get_lyrics_for_song(artist, song)
             
             if lyrics:
                 st.success("✅ Lyrics found!")
