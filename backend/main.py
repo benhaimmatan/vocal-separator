@@ -19,24 +19,56 @@ from .supabase_client import get_supabase_client, SupabaseClient, init_database_
 try:
     import sys
     import os
-    # Add the project root to Python path for modal_functions import
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
-    # Check for Modal credentials using user's variable names
+    # Check for Modal credentials first
     modal_token_id = os.getenv("MODALTOKENID")
     modal_token_secret = os.getenv("MODALTOKENSECRET")
     
-    if modal_token_id and modal_token_secret:
+    if not modal_token_id or not modal_token_secret:
+        MODAL_ENABLED = False
+        print("Modal credentials not found in environment - falling back to CPU")
+    else:
         # Set standard Modal environment variables
         os.environ["MODAL_TOKEN_ID"] = modal_token_id
         os.environ["MODAL_TOKEN_SECRET"] = modal_token_secret
         
-        from modal_functions import ModalClient
-        MODAL_ENABLED = True
-        print("Modal GPU processing enabled")
-    else:
-        MODAL_ENABLED = False
-        print("Modal credentials not found - falling back to CPU")
+        # Try different import paths for modal_functions
+        modal_client = None
+        
+        # Try importing from project root
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if os.path.exists(os.path.join(project_root, "modal_functions.py")):
+            sys.path.insert(0, project_root)
+            try:
+                from modal_functions import ModalClient
+                modal_client = ModalClient
+            except ImportError as e:
+                print(f"Failed to import from project root: {e}")
+        
+        # Try importing from app root (HuggingFace container)
+        if modal_client is None and os.path.exists("/app/modal_functions.py"):
+            sys.path.insert(0, "/app")
+            try:
+                from modal_functions import ModalClient
+                modal_client = ModalClient
+            except ImportError as e:
+                print(f"Failed to import from /app: {e}")
+        
+        # Try relative import from current working directory
+        if modal_client is None and os.path.exists("modal_functions.py"):
+            try:
+                from modal_functions import ModalClient
+                modal_client = ModalClient
+            except ImportError as e:
+                print(f"Failed to import from current directory: {e}")
+        
+        if modal_client:
+            MODAL_ENABLED = True
+            print("Modal GPU processing enabled")
+        else:
+            MODAL_ENABLED = False
+            print("Modal functions module not found - falling back to CPU")
+            
 except ImportError as e:
     MODAL_ENABLED = False
     print(f"Modal GPU processing disabled - falling back to CPU: {e}")
