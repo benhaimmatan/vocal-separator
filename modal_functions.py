@@ -204,11 +204,8 @@ class ModalClient:
         import modal
         
         try:
-            # Reference the deployed app and its functions
-            app_ref = modal.App("vocal-separator-gpu")
-            
-            # Get function handles from the deployed app
-            separate_func = modal.Function.lookup("vocal-separator-gpu", "separate_audio_gpu")
+            # Get function handle from the deployed app
+            separate_func = modal.Function.from_name("vocal-separator-gpu", "separate_audio_gpu")
             
             # Call the deployed function
             return separate_func.remote(audio_data, extract_vocals, extract_accompaniment)
@@ -227,8 +224,8 @@ class ModalClient:
         import modal
         
         try:
-            # Reference the deployed app and its functions  
-            chord_func = modal.Function.lookup("vocal-separator-gpu", "detect_chords_gpu")
+            # Get function handle from the deployed app
+            chord_func = modal.Function.from_name("vocal-separator-gpu", "detect_chords_gpu")
             
             # Call the deployed function
             return chord_func.remote(audio_data)
