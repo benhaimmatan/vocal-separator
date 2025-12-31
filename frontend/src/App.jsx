@@ -3,6 +3,7 @@ import { Activity, Music, FileText, Layers, Settings, HelpCircle, Upload, X, Pla
 import AuthModal from './components/AuthModal';
 import UserMenu from './components/UserMenu';
 import JobHistoryModal from './components/JobHistoryModal';
+import ChordAnalyzer from './components/ChordAnalyzer';
 
 // API functions
 const api = {
@@ -227,6 +228,7 @@ export default function App() {
   const [lyrics, setLyrics] = useState(null);
   const [chords, setChords] = useState(null);
   const [error, setError] = useState(null);
+  const [showChordAnalyzer, setShowChordAnalyzer] = useState(false);
   
   // Authentication state
   const [user, setUser] = useState(null);
@@ -264,6 +266,7 @@ export default function App() {
     setChords(null);
     setLyrics(null);
     setError(null);
+    setShowChordAnalyzer(false);
   };
 
   const handleAuthSuccess = (userData, token) => {
@@ -305,6 +308,7 @@ export default function App() {
       const res = await api.detectChords(file, authToken);
       if (res.success) {
         setChords(res.chords);
+        setShowChordAnalyzer(true);
       } else {
         setError('Failed to detect chords');
       }
@@ -353,8 +357,24 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
-      {/* Left Navigation */}
-      <nav className="w-16 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4 flex-shrink-0">
+      {/* Chord Analyzer Overlay */}
+      {showChordAnalyzer && chords && file && (
+        <ChordAnalyzer
+          audioFile={file}
+          chordData={chords}
+          onBack={() => {
+            setShowChordAnalyzer(false);
+            setChords(null);
+            setFile(null);
+          }}
+        />
+      )}
+
+      {/* Main App - hidden when chord analyzer is open */}
+      {!showChordAnalyzer && (
+        <>
+          {/* Left Navigation */}
+          <nav className="w-16 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4 flex-shrink-0">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-8 shadow-lg shadow-violet-500/20">
           <Activity size={20} />
         </div>
@@ -548,12 +568,20 @@ export default function App() {
                       </table>
                     </div>
 
-                    <button
-                      onClick={() => { setFile(null); setChords(null); }}
-                      className="w-full py-3 text-sm font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
-                    >
-                      Analyze another file
-                    </button>
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => setShowChordAnalyzer(true)}
+                        className="w-full py-3.5 px-4 bg-violet-500 hover:bg-violet-400 text-white font-medium rounded-xl transition-all duration-200 active:scale-[0.98]"
+                      >
+                        Open Professional Analyzer
+                      </button>
+                      <button
+                        onClick={() => { setFile(null); setChords(null); }}
+                        className="w-full py-3 text-sm font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
+                      >
+                        Analyze another file
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -745,18 +773,20 @@ export default function App() {
         </div>
       </main>
 
-      {/* Modals */}
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={handleAuthSuccess}
-      />
-      
-      <JobHistoryModal 
-        isOpen={showJobHistory}
-        onClose={() => setShowJobHistory(false)}
-        authToken={authToken}
-      />
+          {/* Modals */}
+          <AuthModal 
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            onAuthSuccess={handleAuthSuccess}
+          />
+          
+          <JobHistoryModal 
+            isOpen={showJobHistory}
+            onClose={() => setShowJobHistory(false)}
+            authToken={authToken}
+          />
+        </>
+      )}
     </div>
   );
 }
