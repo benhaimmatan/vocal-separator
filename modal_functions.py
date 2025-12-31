@@ -53,7 +53,6 @@ def separate_audio_gpu(audio_data: bytes, extract_vocals: bool = True, extract_a
     """
     import torch
     import torchaudio
-    import demucs.api
     import soundfile as sf
     import tempfile
     import os
@@ -222,7 +221,7 @@ class ModalClient:
         
         try:
             # Get function handle from the deployed app
-            separate_func = modal.Function.from_name("vocal-separator-gpu", "separate_audio_gpu")
+            separate_func = modal.Function.from_name("vocal-separator-gpu-v3", "separate_audio_gpu")
             
             # Call the deployed function
             return separate_func.remote(audio_data, extract_vocals, extract_accompaniment)
@@ -242,7 +241,7 @@ class ModalClient:
         
         try:
             # Get function handle from the deployed app
-            chord_func = modal.Function.from_name("vocal-separator-gpu", "detect_chords_gpu")
+            chord_func = modal.Function.from_name("vocal-separator-gpu-v3", "detect_chords_gpu")
             
             # Call the deployed function
             return chord_func.remote(audio_data)
