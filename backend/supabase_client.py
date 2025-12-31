@@ -6,11 +6,11 @@ load_dotenv()
 
 def get_supabase_client() -> Client:
     """Initialize and return Supabase client"""
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_ANON_KEY")
+    url = os.getenv("SUPABASEURL")
+    key = os.getenv("SUPABASEANONKEY")
     
     if not url or not key:
-        raise ValueError("Missing Supabase credentials. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.")
+        raise ValueError("Missing Supabase credentials. Set SUPABASEURL and SUPABASEANONKEY environment variables.")
     
     return create_client(url, key)
 
