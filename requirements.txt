@@ -18,5 +18,3 @@ beautifulsoup4==4.12.2
 requests==2.31.0
 python-dotenv==1.0.0
 supabase==2.0.2
-modal==0.63.0
-postgrest==0.14.0

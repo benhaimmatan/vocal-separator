@@ -17,12 +17,16 @@ from .supabase_client import get_supabase_client, SupabaseClient, init_database_
 
 # Import Modal client for GPU processing
 try:
-    from ..modal_functions import ModalClient
+    import sys
+    import os
+    # Add the project root to Python path for modal_functions import
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from modal_functions import ModalClient
     MODAL_ENABLED = True
     print("Modal GPU processing enabled")
-except ImportError:
+except ImportError as e:
     MODAL_ENABLED = False
-    print("Modal GPU processing disabled - falling back to CPU")
+    print(f"Modal GPU processing disabled - falling back to CPU: {e}")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
