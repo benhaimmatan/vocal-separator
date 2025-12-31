@@ -1,22 +1,14 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-python-multipart==0.0.6
+streamlit==1.29.0
+supabase==2.3.4
+modal==0.63.22
 librosa==0.10.1
 soundfile==0.12.1
-audioread==3.0.1
 numpy==1.24.3
 scipy==1.11.4
-scikit-learn==1.3.2
 torch==2.1.0
 torchaudio==2.1.0
 --extra-index-url https://download.pytorch.org/whl/cpu
 demucs==4.0.1
-essentia==2.1b6.dev1110
-midiutil==1.2.1
-matplotlib==3.8.2
 beautifulsoup4==4.12.2
 requests==2.31.0
 python-dotenv==1.0.0
-supabase==2.3.4
-streamlit==1.29.0
-modal==0.63.22
