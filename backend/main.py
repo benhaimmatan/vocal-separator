@@ -353,8 +353,13 @@ async def download_file(file_path: str):
     raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
 
 @app.post("/api/chords")
-async def detect_chords(file: UploadFile = File(...), user = Depends(get_current_user)):
-    """Detect chords from audio file using GPU acceleration"""
+async def detect_chords(
+    file: UploadFile = File(...), 
+    simplicity_preference: float = Form(0.5),
+    bpm_override: Optional[float] = Form(None),
+    user = Depends(get_current_user)
+):
+    """Detect chords from audio file using advanced GPU acceleration"""
     job_id = None
     
     try:
@@ -378,8 +383,8 @@ async def detect_chords(file: UploadFile = File(...), user = Depends(get_current
         
         # Use Modal GPU processing if available
         if MODAL_ENABLED:
-            logger.info("Using Modal GPU chord detection")
-            result = ModalClient.detect_chords(content)
+            logger.info(f"Using Modal GPU chord detection (simplicity: {simplicity_preference}, BPM: {bpm_override})")
+            result = ModalClient.detect_chords(content, simplicity_preference, bpm_override)
             
             if result["success"]:
                 # Update job with results
@@ -404,8 +409,17 @@ async def detect_chords(file: UploadFile = File(...), user = Depends(get_current
                 tmp.write(content)
                 tmp_path = tmp.name
             
-            logger.info(f"Detecting chords: {file.filename}")
-            chords = chord_detector.detect_chords(tmp_path)
+            logger.info(f"Detecting chords with advanced CPU processing: {file.filename} (simplicity: {simplicity_preference}, BPM: {bpm_override})")
+            
+            # Use advanced chord detection with new parameters
+            result = chord_detector.detect_chords_advanced(
+                tmp_path,
+                simplicity_preference=simplicity_preference,
+                bpm_override=bmp_override
+            )
+            
+            # Extract chords from result for compatibility
+            chords = result.get("chords", [])
             
             os.unlink(tmp_path)
             

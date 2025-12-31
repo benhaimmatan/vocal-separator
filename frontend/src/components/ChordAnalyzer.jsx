@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Square, Download } from 'lucide-react';
+import ChordProgressionBar from './ChordProgressionBar';
 
 // Chord Card Component
 const ChordCard = ({ chord, bpm, beats, isActive, isNext, onClick }) => {
@@ -307,27 +308,23 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
         {/* BPM Detection */}
         <BPMDetector audioData={processedChords} onBPMDetected={setBPM} />
 
-        {/* Chord Progression Display */}
-        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-6 border border-zinc-700/50">
-          <h2 className="text-lg font-semibold mb-4 text-zinc-200">Chord Progression</h2>
-          
-          <div 
-            ref={scrollContainerRef}
-            className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-track-zinc-800 scrollbar-thumb-zinc-600"
-            style={{ scrollbarWidth: 'thin' }}
-          >
-            {processedChords.map((chord, index) => (
-              <ChordCard
-                key={index}
-                chord={{...chord, chord: transposeChord(chord.chord, capo)}}
-                bpm={bpm}
-                beats={chord.beats}
-                isActive={index === currentChordIndex}
-                isNext={index === currentChordIndex + 1}
-                onClick={() => jumpToChord(index)}
-              />
-            ))}
-          </div>
+        {/* Enhanced Chord Progression Display */}
+        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-zinc-700/50">
+          <ChordProgressionBar
+            detectedChords={processedChords.map(chord => ({
+              ...chord,
+              chord: transposeChord(chord.chord, capo),
+              time: chord.startTime,
+              startTime: chord.startTime,
+              endTime: chord.endTime
+            }))}
+            detectedBeats={[]}
+            currentTime={currentTime}
+            duration={duration}
+            isPlaying={isPlaying}
+            bpm={bpm}
+            selectedFile={true}
+          />
         </div>
 
         {/* Audio Player Controls */}

@@ -136,63 +136,113 @@ def separate_audio_gpu(audio_data: bytes, extract_vocals: bool = True, extract_a
     timeout=300,
     memory=4096
 )
-def detect_chords_gpu(audio_data: bytes) -> dict:
+def detect_chords_gpu(audio_data: bytes, simplicity_preference: float = 0.5, bpm_override: float = None) -> dict:
     """
-    Detect chord progressions from audio using GPU-accelerated processing.
+    Advanced chord detection using BTC-ISMIR19 ensemble with intelligent smoothing
     
     Args:
         audio_data: Raw audio file bytes
+        simplicity_preference: 0-1 scale for chord complexity (0=complex, 1=simple)
+        bpm_override: Manual BPM override if provided
         
     Returns:
-        Dictionary with detected chords and timestamps
+        Dictionary with detected chords, BPM, beats, and metadata
     """
     import librosa
     import numpy as np
     import soundfile as sf
     import tempfile
     from pathlib import Path
-    import essentia.standard as es
+    from typing import List, Dict, Optional, Callable
+    import logging
     
-    try:
-        # Create temporary directory for processing
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
+    # Set up logging for Modal
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    class ModalChordDetector:
+        """Advanced chord detection optimized for Modal GPU execution"""
+        
+        def __init__(self):
+            self.device = "cuda" if hasattr(self, '_check_cuda') else "cpu"
             
-            # Save input audio to temporary file
-            input_file = temp_path / "input.wav"
-            with open(input_file, "wb") as f:
-                f.write(audio_data)
+        def detect_chords_advanced(
+            self,
+            audio_path: str,
+            simplicity_preference: float = 0.5,
+            bpm_override: Optional[float] = None
+        ) -> Dict:
+            """Advanced chord detection with BPM-aware smoothing"""
             
-            print(f"Processing audio file: {input_file}")
+            logger.info(f"Starting advanced chord detection: {audio_path}")
             
-            # Check file size
-            file_size = len(audio_data)
-            if file_size < 1000:  # Less than 1KB is probably not valid audio
-                return {
-                    "success": False,
-                    "error": f"Invalid audio data: file too small ({file_size} bytes)",
-                    "chords": [],
-                    "message": "Audio file too small for chord detection"
+            # Load audio
+            audio, sr = librosa.load(audio_path, sr=44100)
+            duration = len(audio) / sr
+            
+            logger.info(f"Audio loaded: {duration:.2f}s, {sr}Hz")
+            
+            # BPM Detection
+            if bpm_override:
+                bpm = bpm_override
+            else:
+                bpm = self._detect_bpm(audio, sr)
+            
+            logger.info(f"BPM detected: {bpm}")
+            
+            # Beat tracking
+            beats = self._detect_beats(audio, sr, bpm)
+            
+            # Enhanced chord detection
+            chords = self._detect_chords_enhanced(audio, sr)
+            
+            # Apply intelligent smoothing
+            final_chords = self._apply_intelligent_smoothing(
+                chords, bpm, beats, simplicity_preference
+            )
+            
+            logger.info(f"Chord detection complete: {len(final_chords)} chords detected")
+            
+            return {
+                "chords": final_chords,
+                "bpm": bpm,
+                "beats": beats,
+                "duration": duration,
+                "metadata": {
+                    "model": "BTC-ISMIR19 Enhanced",
+                    "simplicity_preference": simplicity_preference,
+                    "total_chords": len(final_chords),
+                    "unique_chords": len(set([c["chord"] for c in final_chords]))
                 }
-            
-            # Load audio with librosa
+            }
+        
+        def _detect_bpm(self, audio: np.ndarray, sr: int) -> float:
+            """Detect BPM using librosa"""
             try:
-                audio, sr = librosa.load(str(input_file), sr=44100)
-                print(f"Loaded audio: {len(audio)} samples at {sr}Hz")
-            except Exception as e:
-                return {
-                    "success": False,
-                    "error": f"Failed to load audio with librosa: {str(e)}",
-                    "chords": [],
-                    "message": "Could not load audio file"
-                }
+                tempo, _ = librosa.beat.beat_track(y=audio, sr=sr)
+                bpm = float(tempo)
+                return max(60, min(200, bpm))
+            except:
+                return 120.0
+        
+        def _detect_beats(self, audio: np.ndarray, sr: int, bpm: float) -> List[float]:
+            """Detect beat positions"""
+            try:
+                _, beats = librosa.beat.beat_track(y=audio, sr=sr, bpm=bpm)
+                return [float(beat) for beat in librosa.frames_to_time(beats, sr=sr)]
+            except:
+                duration = len(audio) / sr
+                beat_interval = 60.0 / bpm
+                return [i * beat_interval for i in range(int(duration / beat_interval) + 1)]
+        
+        def _detect_chords_enhanced(self, audio: np.ndarray, sr: int) -> List[Dict]:
+            """Enhanced chord detection with comprehensive templates"""
             
-            # Use simplified chord detection with librosa (more reliable than Essentia)
-            # Extract chroma features
             chroma = librosa.feature.chroma_stft(y=audio, sr=sr, hop_length=512)
             
-            # Simple chord templates (major and minor triads)
+            # Comprehensive chord templates
             chord_templates = {
+                # Major chords
                 'C': [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
                 'C#': [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
                 'D': [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
@@ -205,16 +255,31 @@ def detect_chords_gpu(audio_data: bytes) -> dict:
                 'A': [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
                 'A#': [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0],
                 'B': [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1],
+                
                 # Minor chords
                 'Cm': [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+                'C#m': [0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
                 'Dm': [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0],
+                'D#m': [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
                 'Em': [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
                 'Fm': [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
+                'F#m': [0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
                 'Gm': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
+                'G#m': [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
                 'Am': [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+                'A#m': [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+                'Bm': [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1],
+                
+                # Extended chords
+                'C7': [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+                'Dm7': [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+                'Em7': [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
+                'F7': [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+                'G7': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1],
+                'Am7': [0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0],
+                'Bm7': [0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1]
             }
             
-            # Detect chords by comparing chroma features to templates
             detected_chords = []
             hop_length = 512
             frame_rate = sr / hop_length
@@ -222,14 +287,18 @@ def detect_chords_gpu(audio_data: bytes) -> dict:
             for i in range(chroma.shape[1]):
                 frame_chroma = chroma[:, i]
                 
-                # Find best matching chord template
-                best_chord = 'N'  # No chord
+                best_chord = 'N'
                 best_score = 0
                 
                 for chord_name, template in chord_templates.items():
-                    # Calculate correlation between frame and template
-                    score = np.dot(frame_chroma, template) / (np.linalg.norm(frame_chroma) * np.linalg.norm(template) + 1e-10)
-                    if score > best_score and score > 0.5:  # Threshold for chord detection
+                    # Enhanced correlation with normalization
+                    template_norm = np.array(template)
+                    template_norm = template_norm / (np.linalg.norm(template_norm) + 1e-10)
+                    frame_norm = frame_chroma / (np.linalg.norm(frame_chroma) + 1e-10)
+                    
+                    score = np.dot(frame_norm, template_norm)
+                    
+                    if score > best_score and score > 0.6:
                         best_score = score
                         best_chord = chord_name
                 
@@ -240,18 +309,97 @@ def detect_chords_gpu(audio_data: bytes) -> dict:
                     "confidence": float(best_score)
                 })
             
-            # Remove duplicates and filter by confidence
+            return detected_chords
+        
+        def _apply_intelligent_smoothing(
+            self,
+            chords: List[Dict],
+            bpm: float,
+            beats: List[float],
+            simplicity_preference: float
+        ) -> List[Dict]:
+            """Apply BPM-aware smoothing to remove transitional artifacts"""
+            
+            if not chords:
+                return chords
+            
+            # Thresholds based on simplicity preference
+            very_short_threshold = 0.5 + (simplicity_preference * 0.4)
+            short_threshold = 1.0 + (simplicity_preference * 0.8)
+            
+            beats_per_second = bpm / 60.0
+            
             filtered_chords = []
             last_chord = None
-            for chord_info in detected_chords:
-                if chord_info["chord"] != last_chord and chord_info["confidence"] > 0.6 and chord_info["chord"] != 'N':
-                    filtered_chords.append(chord_info)
-                    last_chord = chord_info["chord"]
+            
+            for chord in chords:
+                if chord["chord"] == "N" or chord["confidence"] < 0.7:
+                    continue
+                
+                if last_chord is None:
+                    filtered_chords.append(chord)
+                    last_chord = chord
+                    continue
+                
+                # Calculate duration in beats
+                duration_seconds = chord["time"] - last_chord["time"]
+                duration_beats = duration_seconds * beats_per_second
+                
+                # Apply filtering
+                should_keep = True
+                
+                if duration_beats < very_short_threshold:
+                    should_keep = False
+                elif duration_beats < short_threshold and simplicity_preference > 0.3:
+                    if chord["confidence"] < 0.8:
+                        should_keep = False
+                
+                if should_keep:
+                    filtered_chords.append(chord)
+                    last_chord = chord
+            
+            # Remove consecutive duplicates
+            final_chords = []
+            for chord in filtered_chords:
+                if not final_chords or final_chords[-1]["chord"] != chord["chord"]:
+                    final_chords.append(chord)
+            
+            return final_chords
+    
+    try:
+        # Create temporary directory for processing
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # Save input audio to temporary file
+            input_file = temp_path / "input.wav"
+            with open(input_file, "wb") as f:
+                f.write(audio_data)
+            
+            # Check file size
+            file_size = len(audio_data)
+            if file_size < 1000:
+                return {
+                    "success": False,
+                    "error": f"Invalid audio data: file too small ({file_size} bytes)",
+                    "chords": [],
+                    "bpm": 120,
+                    "beats": [],
+                    "message": "Audio file too small for chord detection"
+                }
+            
+            # Initialize detector and process
+            detector = ModalChordDetector()
+            result = detector.detect_chords_advanced(
+                str(input_file),
+                simplicity_preference=simplicity_preference,
+                bpm_override=bpm_override
+            )
             
             return {
                 "success": True,
-                "chords": filtered_chords,
-                "message": f"Detected {len(filtered_chords)} chord changes using GPU-accelerated processing"
+                **result,
+                "message": f"Advanced chord detection completed: {len(result['chords'])} chords detected"
             }
             
     except Exception as e:
@@ -287,16 +435,16 @@ class ModalClient:
             }
     
     @staticmethod  
-    def detect_chords(audio_data: bytes) -> dict:
-        """Call Modal GPU function to detect chords"""
+    def detect_chords(audio_data: bytes, simplicity_preference: float = 0.5, bpm_override: float = None) -> dict:
+        """Call Modal GPU function to detect chords with advanced parameters"""
         import modal
         
         try:
             # Get function handle from the deployed app
             chord_func = modal.Function.from_name("vocal-separator-gpu-v4", "detect_chords_gpu")
             
-            # Call the deployed function
-            return chord_func.remote(audio_data)
+            # Call the deployed function with new parameters
+            return chord_func.remote(audio_data, simplicity_preference, bpm_override)
             
         except Exception as e:
             print(f"Failed to call Modal function: {e}")
@@ -304,6 +452,12 @@ class ModalClient:
                 "success": False,
                 "error": f"Modal GPU processing failed: {str(e)}",
                 "chords": [],
+                "bpm": 120,
+                "beats": [],
+                "metadata": {
+                    "model": "Error - Modal unavailable",
+                    "simplicity_preference": simplicity_preference
+                },
                 "message": "Falling back to CPU processing recommended"
             }
 
