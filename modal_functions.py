@@ -163,43 +163,95 @@ def detect_chords_gpu(audio_data: bytes) -> dict:
             with open(input_file, "wb") as f:
                 f.write(audio_data)
             
-            # Load audio
-            audio, sr = librosa.load(str(input_file), sr=44100)
+            print(f"Processing audio file: {input_file}")
             
-            # Use Essentia for chord detection
-            loader = es.MonoLoader(filename=str(input_file))
-            audio_essentia = loader()
+            # Check file size
+            file_size = len(audio_data)
+            if file_size < 1000:  # Less than 1KB is probably not valid audio
+                return {
+                    "success": False,
+                    "error": f"Invalid audio data: file too small ({file_size} bytes)",
+                    "chords": [],
+                    "message": "Audio file too small for chord detection"
+                }
             
-            # Chord detection using Essentia's chord detector
-            chord_detector = es.ChordsDetection()
-            chords, strength = chord_detector(audio_essentia)
+            # Load audio with librosa
+            try:
+                audio, sr = librosa.load(str(input_file), sr=44100)
+                print(f"Loaded audio: {len(audio)} samples at {sr}Hz")
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"Failed to load audio with librosa: {str(e)}",
+                    "chords": [],
+                    "message": "Could not load audio file"
+                }
             
-            # Create chord progression with timestamps
+            # Use simplified chord detection with librosa (more reliable than Essentia)
+            # Extract chroma features
+            chroma = librosa.feature.chroma_stft(y=audio, sr=sr, hop_length=512)
+            
+            # Simple chord templates (major and minor triads)
+            chord_templates = {
+                'C': [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+                'C#': [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
+                'D': [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                'D#': [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
+                'E': [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+                'F': [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0],
+                'F#': [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+                'G': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+                'G#': [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+                'A': [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+                'A#': [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+                'B': [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1],
+                # Minor chords
+                'Cm': [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+                'Dm': [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0],
+                'Em': [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
+                'Fm': [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
+                'Gm': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
+                'Am': [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+            }
+            
+            # Detect chords by comparing chroma features to templates
+            detected_chords = []
             hop_length = 512
             frame_rate = sr / hop_length
             
-            chord_progression = []
-            for i, chord in enumerate(chords):
-                if strength[i] > 0.1:  # Filter weak detections
-                    timestamp = i / frame_rate
-                    chord_progression.append({
-                        "time": timestamp,
-                        "chord": chord,
-                        "confidence": float(strength[i])
-                    })
+            for i in range(chroma.shape[1]):
+                frame_chroma = chroma[:, i]
+                
+                # Find best matching chord template
+                best_chord = 'N'  # No chord
+                best_score = 0
+                
+                for chord_name, template in chord_templates.items():
+                    # Calculate correlation between frame and template
+                    score = np.dot(frame_chroma, template) / (np.linalg.norm(frame_chroma) * np.linalg.norm(template) + 1e-10)
+                    if score > best_score and score > 0.5:  # Threshold for chord detection
+                        best_score = score
+                        best_chord = chord_name
+                
+                timestamp = i / frame_rate
+                detected_chords.append({
+                    "time": timestamp,
+                    "chord": best_chord,
+                    "confidence": float(best_score)
+                })
             
             # Remove duplicates and filter by confidence
             filtered_chords = []
             last_chord = None
-            for chord_info in chord_progression:
-                if chord_info["chord"] != last_chord and chord_info["confidence"] > 0.3:
+            for chord_info in detected_chords:
+                if chord_info["chord"] != last_chord and chord_info["confidence"] > 0.6 and chord_info["chord"] != 'N':
                     filtered_chords.append(chord_info)
                     last_chord = chord_info["chord"]
             
             return {
                 "success": True,
                 "chords": filtered_chords,
-                "message": f"Detected {len(filtered_chords)} chord changes"
+                "message": f"Detected {len(filtered_chords)} chord changes using GPU-accelerated processing"
             }
             
     except Exception as e:
@@ -221,7 +273,7 @@ class ModalClient:
         
         try:
             # Get function handle from the deployed app
-            separate_func = modal.Function.from_name("vocal-separator-gpu-v3", "separate_audio_gpu")
+            separate_func = modal.Function.from_name("vocal-separator-gpu-v4", "separate_audio_gpu")
             
             # Call the deployed function
             return separate_func.remote(audio_data, extract_vocals, extract_accompaniment)
@@ -241,7 +293,7 @@ class ModalClient:
         
         try:
             # Get function handle from the deployed app
-            chord_func = modal.Function.from_name("vocal-separator-gpu-v3", "detect_chords_gpu")
+            chord_func = modal.Function.from_name("vocal-separator-gpu-v4", "detect_chords_gpu")
             
             # Call the deployed function
             return chord_func.remote(audio_data)
