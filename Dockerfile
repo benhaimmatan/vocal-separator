@@ -9,13 +9,13 @@ RUN apt-get update && apt-get install -y \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy requirements and install Python dependencies  
+COPY requirements_minimal.txt .
+RUN pip install --no-cache-dir -r requirements_minimal.txt
 
 # Copy application files
 COPY backend/ ./backend/
-COPY streamlit_app.py .
+COPY streamlit_app_minimal.py ./streamlit_app.py
 
 # Create Streamlit config directory
 RUN mkdir -p .streamlit
