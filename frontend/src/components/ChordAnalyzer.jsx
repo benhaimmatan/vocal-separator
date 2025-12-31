@@ -177,7 +177,9 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
         ...chord,
         duration,
         beats,
-        index
+        index,
+        startTime: chord.time,
+        endTime: nextChord ? nextChord.time : chord.time + duration
       };
     });
   }, [chordData, bpm]);
@@ -271,6 +273,11 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
 
   // Create audio URL
   const audioUrl = audioFile ? URL.createObjectURL(audioFile) : null;
+  
+  // Debug logging
+  console.log('ChordAnalyzer - audioFile:', audioFile);
+  console.log('ChordAnalyzer - audioUrl:', audioUrl);
+  console.log('ChordAnalyzer - chordData length:', chordData?.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 to-zinc-900 text-zinc-100">
@@ -313,10 +320,7 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
           <ChordProgressionBar
             detectedChords={processedChords.map(chord => ({
               ...chord,
-              chord: transposeChord(chord.chord, capo),
-              time: chord.startTime,
-              startTime: chord.startTime,
-              endTime: chord.endTime
+              chord: transposeChord(chord.chord, capo)
             }))}
             detectedBeats={[]}
             currentTime={currentTime}
@@ -328,18 +332,23 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
         </div>
 
         {/* Audio Player Controls */}
-        {audioUrl && (
-          <AudioPlayerControls
-            audioRef={audioRef}
-            isPlaying={isPlaying}
-            onPlayPause={handlePlayPause}
-            onStop={handleStop}
-            currentTime={currentTime}
-            duration={duration}
-            onSeek={handleSeek}
-            capo={capo}
-            onCapoChange={setCapo}
-          />
+        <AudioPlayerControls
+          audioRef={audioRef}
+          isPlaying={isPlaying}
+          onPlayPause={handlePlayPause}
+          onStop={handleStop}
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={handleSeek}
+          capo={capo}
+          onCapoChange={setCapo}
+        />
+        
+        {/* Debug info for audio */}
+        {!audioUrl && (
+          <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl text-orange-400 text-sm">
+            ⚠️ Audio file not available for playback. File: {audioFile ? 'Present' : 'Missing'}
+          </div>
         )}
 
         {/* Moving Window Button */}

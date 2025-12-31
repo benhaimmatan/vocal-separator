@@ -212,10 +212,10 @@ const ChordProgressionBar = ({
   const currentBeatInfo = currentChord ? getCurrentBeatInfo(currentChord) : { currentBeat: 1, beatProgress: 0 };
   const currentChordName = currentChord ? currentChord.chord : '';
 
-  // Get display chords for sequence
+  // Get display chords for sequence (previous, current, next)
   const displayChords = [];
   const startIndex = Math.max(0, currentChordIndex - 1);
-  const endIndex = Math.min(chordProgression.length, startIndex + 4);
+  const endIndex = Math.min(chordProgression.length, startIndex + 3); // Show exactly 3 chords
   
   for (let i = startIndex; i < endIndex; i++) {
     displayChords.push(chordProgression[i]);

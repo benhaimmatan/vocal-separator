@@ -379,8 +379,6 @@ export default function App() {
           chordData={chords}
           onBack={() => {
             setShowChordAnalyzer(false);
-            setChords(null);
-            setFile(null);
           }}
           onMovingWindow={() => {
             setShowChordAnalyzer(false);
