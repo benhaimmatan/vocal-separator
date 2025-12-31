@@ -28,12 +28,17 @@ def authenticate_user():
     """Handle user authentication"""
     st.title("🎵 Vocal Separator Pro")
     
+    # Always show demo mode option prominently
+    st.info("💡 **Quick Start**: Skip login and try the app immediately!")
+    if st.button("🚀 **Try Demo Mode**", type="primary"):
+        st.session_state.authenticated = True
+        st.session_state.user = {"email": "demo@example.com", "id": "demo"}
+        st.rerun()
+    
+    st.markdown("---")
+    
     if not st.session_state.supabase:
         st.warning("Authentication disabled - Supabase not configured")
-        if st.button("Continue in Demo Mode"):
-            st.session_state.authenticated = True
-            st.session_state.user = {"email": "demo@example.com", "id": "demo"}
-            st.rerun()
         return
     
     st.subheader("Sign in to get started")
