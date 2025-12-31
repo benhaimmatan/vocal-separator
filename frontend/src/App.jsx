@@ -1,32 +1,44 @@
-import React, { useState, useRef } from 'react';
-import { Activity, Music, FileText, Layers, Settings, HelpCircle, Upload, X, Play, Pause, Download, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Activity, Music, FileText, Layers, Settings, HelpCircle, Upload, X, Play, Pause, Download, Check, User } from 'lucide-react';
+import AuthModal from './components/AuthModal';
+import UserMenu from './components/UserMenu';
+import JobHistoryModal from './components/JobHistoryModal';
 
 // API functions
 const api = {
-  async separateAudio(file, extractVocals, extractAccompaniment) {
+  async separateAudio(file, extractVocals, extractAccompaniment, authToken = null) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('extract_vocals', extractVocals);
     formData.append('extract_accompaniment', extractAccompaniment);
     
-    const res = await fetch('/api/separate', { method: 'POST', body: formData });
+    const headers = {};
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
+    
+    const res = await fetch('/api/separate', { method: 'POST', body: formData, headers });
     return res.json();
   },
   
-  async detectChords(file) {
+  async detectChords(file, authToken = null) {
     const formData = new FormData();
     formData.append('file', file);
     
-    const res = await fetch('/api/chords', { method: 'POST', body: formData });
+    const headers = {};
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
+    
+    const res = await fetch('/api/chords', { method: 'POST', body: formData, headers });
     return res.json();
   },
   
-  async fetchLyrics(song, artist) {
+  async fetchLyrics(song, artist, authToken = null) {
     const formData = new FormData();
     formData.append('song', song);
     formData.append('artist', artist);
     
-    const res = await fetch('/api/lyrics', { method: 'POST', body: formData });
+    const headers = {};
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
+    
+    const res = await fetch('/api/lyrics', { method: 'POST', body: formData, headers });
     return res.json();
   }
 };
@@ -215,6 +227,28 @@ export default function App() {
   const [lyrics, setLyrics] = useState(null);
   const [chords, setChords] = useState(null);
   const [error, setError] = useState(null);
+  
+  // Authentication state
+  const [user, setUser] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showJobHistory, setShowJobHistory] = useState(false);
+
+  // Check for existing auth on app load
+  useEffect(() => {
+    const savedToken = localStorage.getItem('auth_token');
+    const savedUser = localStorage.getItem('user_data');
+    
+    if (savedToken && savedUser) {
+      try {
+        setAuthToken(savedToken);
+        setUser(JSON.parse(savedUser));
+      } catch (err) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+      }
+    }
+  }, []);
 
   const navItems = [
     { id: 'separator', icon: Activity, label: 'Separator' },
@@ -232,12 +266,26 @@ export default function App() {
     setError(null);
   };
 
+  const handleAuthSuccess = (userData, token) => {
+    setUser(userData);
+    setAuthToken(token);
+    setShowAuthModal(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    setUser(null);
+    setAuthToken(null);
+    setShowJobHistory(false);
+  };
+
   const handleSeparate = async () => {
     if (!file) return;
     setProcessing(true);
     setError(null);
     try {
-      const res = await api.separateAudio(file, extractVocals, extractAccompaniment);
+      const res = await api.separateAudio(file, extractVocals, extractAccompaniment, authToken);
       if (res.success) {
         setResults(res);
       } else {
@@ -254,7 +302,7 @@ export default function App() {
     setProcessing(true);
     setError(null);
     try {
-      const res = await api.detectChords(file);
+      const res = await api.detectChords(file, authToken);
       if (res.success) {
         setChords(res.chords);
       } else {
@@ -271,7 +319,7 @@ export default function App() {
     setProcessing(true);
     setError(null);
     try {
-      const res = await api.fetchLyrics(searchQuery, artistQuery);
+      const res = await api.fetchLyrics(searchQuery, artistQuery, authToken);
       if (res.success) {
         setLyrics(res);
       } else {
@@ -336,6 +384,23 @@ export default function App() {
         </div>
 
         <div className="flex flex-col items-center gap-1 pt-4 border-t border-zinc-800">
+          {user ? (
+            <button 
+              onClick={() => setShowJobHistory(true)}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all" 
+              title="Job History"
+            >
+              <Activity size={20} />
+            </button>
+          ) : (
+            <button 
+              onClick={() => setShowAuthModal(true)}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all" 
+              title="Sign In"
+            >
+              <User size={20} />
+            </button>
+          )}
           <button className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all" title="Settings">
             <Settings size={20} />
           </button>
@@ -347,8 +412,15 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-14 px-6 border-b border-zinc-800 flex items-center flex-shrink-0 bg-zinc-900/50">
+        <header className="h-14 px-6 border-b border-zinc-800 flex items-center justify-between flex-shrink-0 bg-zinc-900/50">
           <h1 className="text-sm font-semibold text-zinc-100">{getTitle()}</h1>
+          {user && (
+            <UserMenu 
+              user={user} 
+              onLogout={handleLogout}
+              onViewHistory={() => setShowJobHistory(true)}
+            />
+          )}
         </header>
 
         <div className="flex-1 overflow-auto">
@@ -614,11 +686,11 @@ export default function App() {
                     setError(null);
                     try {
                       if (searchQuery && artistQuery) {
-                        const lyrRes = await api.fetchLyrics(searchQuery, artistQuery);
+                        const lyrRes = await api.fetchLyrics(searchQuery, artistQuery, authToken);
                         if (lyrRes.success) setLyrics(lyrRes);
                       }
                       if (file) {
-                        const chordRes = await api.detectChords(file);
+                        const chordRes = await api.detectChords(file, authToken);
                         if (chordRes.success) setChords(chordRes.chords);
                       }
                     } catch (e) {
@@ -672,6 +744,19 @@ export default function App() {
           </div>
         </div>
       </main>
+
+      {/* Modals */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+      
+      <JobHistoryModal 
+        isOpen={showJobHistory}
+        onClose={() => setShowJobHistory(false)}
+        authToken={authToken}
+      />
     </div>
   );
 }
