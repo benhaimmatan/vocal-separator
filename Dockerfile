@@ -1,16 +1,4 @@
-# Multi-stage build for React + FastAPI on HuggingFace Spaces
-FROM node:18-slim AS frontend-builder
-
-WORKDIR /app/frontend
-
-# Copy frontend files
-COPY frontend/package*.json ./
-RUN npm install
-
-COPY frontend/ ./
-RUN npm run build
-
-# Python backend stage
+# Streamlit deployment for HuggingFace Spaces
 FROM python:3.10-slim
 
 WORKDIR /app
@@ -19,25 +7,30 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     libsndfile1 \
-    nginx \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python requirements and install
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend files
+# Copy application files
 COPY backend/ ./backend/
-COPY --from=frontend-builder /app/frontend/dist ./static/
+COPY streamlit_app.py .
+COPY .streamlit/ ./.streamlit/
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/nginx.conf
+# Create Streamlit config directory
+RUN mkdir -p .streamlit
 
-# Expose port 7860 (HuggingFace default)
+# Streamlit config for HuggingFace Spaces
+RUN echo '[server]' > .streamlit/config.toml && \
+    echo 'port = 7860' >> .streamlit/config.toml && \
+    echo 'address = "0.0.0.0"' >> .streamlit/config.toml && \
+    echo 'headless = true' >> .streamlit/config.toml && \
+    echo '[theme]' >> .streamlit/config.toml && \
+    echo 'base = "dark"' >> .streamlit/config.toml
+
+# Expose port 7860 (HuggingFace Spaces default)
 EXPOSE 7860
 
-# Start script
-COPY start.sh .
-RUN chmod +x start.sh
-
-CMD ["./start.sh"]
+# Run Streamlit app
+CMD ["streamlit", "run", "streamlit_app.py"]

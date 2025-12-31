@@ -17,3 +17,6 @@ matplotlib==3.8.2
 beautifulsoup4==4.12.2
 requests==2.31.0
 python-dotenv==1.0.0
+supabase==2.3.4
+streamlit==1.29.0
+modal==0.63.22
