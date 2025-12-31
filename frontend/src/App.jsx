@@ -4,6 +4,7 @@ import AuthModal from './components/AuthModal';
 import UserMenu from './components/UserMenu';
 import JobHistoryModal from './components/JobHistoryModal';
 import ChordAnalyzer from './components/ChordAnalyzer';
+import MovingWindowChordVisualizer from './components/MovingWindowChordVisualizer';
 
 // API functions
 const api = {
@@ -229,12 +230,16 @@ export default function App() {
   const [chords, setChords] = useState(null);
   const [error, setError] = useState(null);
   const [showChordAnalyzer, setShowChordAnalyzer] = useState(false);
+  const [showMovingWindow, setShowMovingWindow] = useState(false);
   
   // Authentication state
   const [user, setUser] = useState(null);
   const [authToken, setAuthToken] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showJobHistory, setShowJobHistory] = useState(false);
+  
+  // Shared audio ref for chord visualizers
+  const sharedAudioRef = useRef(null);
 
   // Check for existing auth on app load
   useEffect(() => {
@@ -267,6 +272,7 @@ export default function App() {
     setLyrics(null);
     setError(null);
     setShowChordAnalyzer(false);
+    setShowMovingWindow(false);
   };
 
   const handleAuthSuccess = (userData, token) => {
@@ -358,7 +364,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
       {/* Chord Analyzer Overlay */}
-      {showChordAnalyzer && chords && file && (
+      {showChordAnalyzer && chords && file && !showMovingWindow && (
         <ChordAnalyzer
           audioFile={file}
           chordData={chords}
@@ -367,11 +373,28 @@ export default function App() {
             setChords(null);
             setFile(null);
           }}
+          onMovingWindow={() => {
+            setShowChordAnalyzer(false);
+            setShowMovingWindow(true);
+          }}
         />
       )}
 
-      {/* Main App - hidden when chord analyzer is open */}
-      {!showChordAnalyzer && (
+      {/* Moving Window Chord Visualizer Overlay */}
+      {showMovingWindow && chords && file && (
+        <MovingWindowChordVisualizer
+          audioFile={file}
+          chordData={chords}
+          audioRef={sharedAudioRef}
+          onBack={() => {
+            setShowMovingWindow(false);
+            setShowChordAnalyzer(true); // Go back to regular analyzer
+          }}
+        />
+      )}
+
+      {/* Main App - hidden when any chord analyzer is open */}
+      {!showChordAnalyzer && !showMovingWindow && (
         <>
           {/* Left Navigation */}
           <nav className="w-16 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4 flex-shrink-0">

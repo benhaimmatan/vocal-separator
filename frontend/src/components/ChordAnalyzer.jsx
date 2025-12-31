@@ -153,7 +153,7 @@ const BPMDetector = ({ audioData, onBPMDetected }) => {
 };
 
 // Main Chord Analyzer Component
-const ChordAnalyzer = ({ audioFile, chordData, onBack }) => {
+const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -344,6 +344,30 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack }) => {
             onCapoChange={setCapo}
           />
         )}
+
+        {/* Moving Window Button */}
+        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-4 border border-zinc-700/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-zinc-200 mb-1">Advanced Visualizer</h3>
+              <p className="text-sm text-zinc-400">Experience real-time chord progression with sliding window view</p>
+            </div>
+            <button
+              onClick={() => {
+                // We'll need to pass this to parent to switch views
+                if (typeof onMovingWindow === 'function') {
+                  onMovingWindow();
+                }
+              }}
+              className="px-6 py-3 bg-violet-500 hover:bg-violet-400 text-white font-medium rounded-xl transition-all duration-200 active:scale-[0.98] flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Moving Window
+            </button>
+          </div>
+        </div>
 
         {/* Chord Details Table */}
         <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-zinc-700/50 overflow-hidden">
