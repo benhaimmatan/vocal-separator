@@ -271,8 +271,13 @@ def scrape_lyrics_genius(artist, title):
         if response.status_code != 200:
             logger.info(f"Genius search failed with status {response.status_code}")
             return None
-            
-        search_data = response.json()
+        
+        # Check if response is JSON
+        try:
+            search_data = response.json()
+        except ValueError as e:
+            logger.info(f"Genius returned non-JSON response: {str(e)[:100]}")
+            return None
         song_hits = []
         
         # Look for song hits in the search results

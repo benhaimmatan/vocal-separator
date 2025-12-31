@@ -160,7 +160,7 @@ def fetch_lyrics(artist, song):
         try:
             lyrics = get_lyrics_for_song(artist, song)
             
-            if lyrics:
+            if lyrics and len(lyrics.strip()) > 10:
                 st.success("✅ Lyrics found!")
                 
                 # Display lyrics in a nice format
@@ -175,10 +175,17 @@ def fetch_lyrics(artist, song):
                     mime="text/plain"
                 )
             else:
-                st.warning("No lyrics found for this song.")
+                st.warning("No lyrics found for this song. Try checking the spelling or try a different song.")
                 
         except Exception as e:
-            st.error(f"Failed to fetch lyrics: {e}")
+            st.error(f"Unable to fetch lyrics. This might be due to:")
+            st.write("- Network issues")
+            st.write("- Website blocking requests") 
+            st.write("- Song not found")
+            st.write(f"Technical details: {str(e)[:100]}...")
+            
+            # Suggest fallback
+            st.info("💡 Try searching for lyrics manually on Google or other lyrics sites.")
 
 # Main application logic
 if not st.session_state.authenticated:
