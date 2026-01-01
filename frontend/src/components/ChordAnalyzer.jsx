@@ -154,14 +154,14 @@ const BPMDetector = ({ audioData, onBPMDetected }) => {
 };
 
 // Main Chord Analyzer Component
-const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
+const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWindow }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentChordIndex, setCurrentChordIndex] = useState(0);
   const [capo, setCapo] = useState(0);
-  const [bpm, setBPM] = useState(120);
+  const [bpm, setBPM] = useState(detectedBPM || 120);  // Use backend BPM
   const scrollContainerRef = useRef(null);
 
   // Convert chord data to include beats and BPM info
@@ -171,7 +171,7 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
     return chordData.map((chord, index) => {
       const nextChord = chordData[index + 1];
       const duration = nextChord ? nextChord.time - chord.time : 4; // Default 4 seconds
-      const beats = Math.max(1, Math.round((duration / 60) * bpm * 4)); // Estimate beats
+      const beats = Math.max(1, Math.round((duration * bpm) / 60)); // Correct beat calculation
       
       return {
         ...chord,
@@ -342,8 +342,8 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
             />
           )}
 
-          {/* BPM Detection */}
-        <BPMDetector audioData={processedChords} onBPMDetected={setBPM} />
+          {/* BPM Detection - Disabled: Using backend BPM detection instead */}
+        {/* <BPMDetector audioData={processedChords} onBPMDetected={setBPM} /> */}
 
         {/* Enhanced Chord Progression Display */}
         <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-zinc-700/50">

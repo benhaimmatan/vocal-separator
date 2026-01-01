@@ -420,9 +420,12 @@ async def detect_chords(
             
             # Extract chords from result for compatibility
             chords = result.get("chords", [])
-            
+            bpm = result.get("bpm", 120)
+            beats = result.get("beats", [])
+            metadata = result.get("metadata", {})
+
             os.unlink(tmp_path)
-            
+
             # Format results
             formatted = []
             for c in chords:
@@ -430,15 +433,23 @@ async def detect_chords(
                     formatted.append({"time": c[0], "end": c[1], "chord": c[2]})
                 else:
                     formatted.append(c)
-            
-            # Update job with results
+
+            # Update job with results (include full data)
             if job_id:
-                supabase_client.update_job_status(job_id, "completed", {"chords": formatted})
-            
+                supabase_client.update_job_status(job_id, "completed", {
+                    "chords": formatted,
+                    "bpm": bpm,
+                    "beats": beats,
+                    "metadata": metadata
+                })
+
             return {
                 "success": True,
                 "job_id": job_id,
-                "chords": formatted
+                "chords": formatted,
+                "bpm": bpm,
+                "beats": beats,
+                "metadata": metadata
             }
         
     except Exception as e:

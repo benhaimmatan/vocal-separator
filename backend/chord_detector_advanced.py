@@ -13,6 +13,16 @@ import soundfile as sf
 import tempfile
 from typing import List, Dict, Tuple, Optional, Callable
 import logging
+import torch
+import yaml
+
+# Import BTC model components
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'BTC-ISMIR19'))
+from btc_model import BTC_model, HParams
+from utils.mir_eval_modules import idx2chord, idx2voca_chord
+
+# Import enhanced rhythm analysis
+from enhanced_rhythm_analysis import EnhancedRhythmAnalyzer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -43,21 +53,51 @@ class AdvancedChordDetector:
     def _load_btc_model(self):
         """Load BTC-ISMIR19 model for chord detection"""
         try:
-            import torch
-            from transformers import AutoModel, AutoTokenizer
-            
-            # Try to load the BTC model
-            # This is a placeholder - actual model loading would require the specific model files
             logger.info("Loading BTC-ISMIR19 model...")
-            
-            # For now, we'll implement a fallback that uses the existing simple detection
-            # but with enhanced post-processing
-            self.model = "btc_placeholder"
-            logger.info("BTC model loaded successfully")
+
+            # Get path to BTC model directory
+            btc_path = os.path.join(os.path.dirname(__file__), 'BTC-ISMIR19')
+
+            # Load config
+            config_path = os.path.join(btc_path, 'run_config.yaml')
+            if not os.path.exists(config_path):
+                logger.error(f"BTC config not found at {config_path}")
+                return False
+
+            config = HParams.load(config_path)
+
+            # Use large vocabulary model for better accuracy (170 chord classes)
+            config.feature['large_voca'] = True
+            config.model['num_chords'] = 170
+
+            # Load model file
+            model_file = os.path.join(btc_path, 'test', 'btc_model_large_voca.pt')
+            if not os.path.exists(model_file):
+                logger.error(f"BTC model file not found at {model_file}")
+                return False
+
+            # Initialize and load model
+            self.model = BTC_model(config=config.model).to(self.device)
+            checkpoint = torch.load(model_file, map_location=self.device, weights_only=False)
+
+            # Store normalization parameters
+            self.btc_mean = checkpoint['mean']
+            self.btc_std = checkpoint['std']
+
+            # Load model state
+            self.model.load_state_dict(checkpoint['model'])
+            self.model.eval()
+
+            # Store config for feature extraction
+            self.btc_config = config
+
+            logger.info("✅ BTC-ISMIR19 model loaded successfully (170 chord classes)")
             return True
-            
+
         except Exception as e:
-            logger.warning(f"Failed to load BTC model: {e}")
+            logger.error(f"Failed to load BTC model: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def _load_autochord(self):
@@ -113,17 +153,16 @@ class AdvancedChordDetector:
             if progress_callback:
                 progress_callback(0.1, "Analyzing audio properties...")
             
-            # BPM Detection
+            # BPM Detection with enhanced rhythm analysis
             if bpm_override:
                 bpm = bpm_override
+                # Still detect beats even with BPM override
+                _, beats, rhythm_metadata = self._detect_bpm(audio, sr)
             else:
-                bpm = self._detect_bpm(audio, sr)
-            
+                bpm, beats, rhythm_metadata = self._detect_bpm(audio, sr)
+
             if progress_callback:
-                progress_callback(0.2, "Detecting beat structure...")
-            
-            # Beat tracking
-            beats = self._detect_beats(audio, sr, bpm)
+                progress_callback(0.2, f"Detected {bpm:.1f} BPM with {len(beats)} beats...")
             
             if progress_callback:
                 progress_callback(0.3, "Running chord detection models...")
@@ -161,6 +200,7 @@ class AdvancedChordDetector:
                     "simplicity_preference": simplicity_preference,
                     "total_chords": len(final_chords),
                     "unique_chords": len(set([c["chord"] for c in final_chords])),
+                    "rhythm_analysis": rhythm_metadata,  # Include rhythm analysis data
                     "processing_time": "N/A"  # Would be calculated in actual implementation
                 }
             }
@@ -174,15 +214,48 @@ class AdvancedChordDetector:
             logger.error(f"Error in advanced chord detection: {e}")
             raise
     
-    def _detect_bpm(self, audio: np.ndarray, sr: int) -> float:
-        """Detect BPM using librosa"""
+    def _detect_bpm(self, audio: np.ndarray, sr: int) -> Tuple[float, np.ndarray, Dict]:
+        """
+        Detect BPM using enhanced rhythm analysis
+
+        Returns:
+            Tuple of (bpm, beats, metadata)
+        """
         try:
-            tempo, _ = librosa.beat.beat_track(y=audio, sr=sr)
-            # Ensure reasonable BPM range
-            bpm = float(tempo)
-            return max(60, min(200, bpm))
-        except:
-            return 120.0  # Default BPM
+            # Use enhanced rhythm analyzer for accurate BPM detection
+            analyzer = EnhancedRhythmAnalyzer(sample_rate=sr)
+            result = analyzer.analyze_rhythm(audio)
+
+            # Extract results
+            bpm = result.tempo_bpm
+            beats = result.beats.tolist() if isinstance(result.beats, np.ndarray) else list(result.beats)
+
+            # Build metadata
+            metadata = {
+                'confidence': result.confidence,
+                'time_signature': f"{result.time_signature_numerator}/4",
+                'time_signature_confidence': result.time_signature_confidence,
+                'tempo_stability': result.tempo_stability,
+                'rhythmic_complexity': result.rhythmic_complexity,
+                'num_beats': len(result.beats),
+                'num_downbeats': len(result.downbeats)
+            }
+
+            logger.info(f"✅ BPM detected: {bpm:.1f} BPM ({result.time_signature_numerator}/4 time, confidence: {result.confidence:.2f})")
+            return bpm, beats, metadata
+
+        except Exception as e:
+            logger.warning(f"Enhanced BPM detection failed, using fallback: {e}")
+            # Fallback to basic librosa detection
+            try:
+                tempo, beat_frames = librosa.beat.beat_track(y=audio, sr=sr)
+                bpm = float(tempo)
+                bpm = max(60, min(200, bpm))
+                beats = librosa.frames_to_time(beat_frames, sr=sr).tolist()
+                metadata = {'method': 'fallback', 'confidence': 0.5}
+                return bpm, beats, metadata
+            except:
+                return 120.0, [], {'method': 'default', 'confidence': 0.0}
     
     def _detect_beats(self, audio: np.ndarray, sr: int, bpm: float) -> List[float]:
         """Detect beat positions"""

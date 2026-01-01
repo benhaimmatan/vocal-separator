@@ -231,6 +231,7 @@ export default function App() {
   const [artistQuery, setArtistQuery] = useState('');
   const [lyrics, setLyrics] = useState(null);
   const [chords, setChords] = useState(null);
+  const [detectedBpm, setDetectedBpm] = useState(120);
   const [error, setError] = useState(null);
   const [showChordAnalyzer, setShowChordAnalyzer] = useState(false);
 
@@ -320,6 +321,7 @@ export default function App() {
       const res = await api.detectChords(file, authToken, simplicityPreference, bpmValue);
       if (res.success) {
         setChords(res.chords);
+        setDetectedBpm(res.bpm || 120);  // Extract BPM from backend
         setShowChordAnalyzer(true);
       } else {
         setError('Failed to detect chords');
@@ -446,6 +448,7 @@ export default function App() {
           <ChordAnalyzer
             audioFile={file}
             chordData={chords}
+            detectedBPM={detectedBpm}
             onBack={() => {
               setShowChordAnalyzer(false);
             }}
