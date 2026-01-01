@@ -280,6 +280,19 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
   // Create audio URL
   const audioUrl = audioFile ? URL.createObjectURL(audioFile) : null;
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🎵 Audio Player Debug:', {
+      hasAudioFile: !!audioFile,
+      audioFileName: audioFile?.name,
+      audioUrl: audioUrl?.substring(0, 50),
+      hasAudioRef: !!audioRef.current,
+      isPlaying,
+      duration,
+      currentTime
+    });
+  }, [audioFile, audioUrl, isPlaying, duration, currentTime]);
+
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-zinc-950 to-zinc-900 text-zinc-100">
       {/* Header */}
