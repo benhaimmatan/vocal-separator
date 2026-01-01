@@ -4,7 +4,6 @@ import AuthModal from './components/AuthModal';
 import UserMenu from './components/UserMenu';
 import JobHistoryModal from './components/JobHistoryModal';
 import ChordAnalyzer from './components/ChordAnalyzer';
-import MovingWindowChordVisualizer from './components/MovingWindowChordVisualizer';
 
 // API functions
 const api = {
@@ -234,8 +233,7 @@ export default function App() {
   const [chords, setChords] = useState(null);
   const [error, setError] = useState(null);
   const [showChordAnalyzer, setShowChordAnalyzer] = useState(false);
-  const [showMovingWindow, setShowMovingWindow] = useState(false);
-  
+
   // Advanced chord detection parameters
   const [simplicityPreference, setSimplicityPreference] = useState(0.5);
   const [bpmOverride, setBpmOverride] = useState('');
@@ -280,7 +278,6 @@ export default function App() {
     setLyrics(null);
     setError(null);
     setShowChordAnalyzer(false);
-    setShowMovingWindow(false);
   };
 
   const handleAuthSuccess = (userData, token) => {
@@ -372,22 +369,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
-      {/* Moving Window Chord Visualizer - Full Overlay Only */}
-      {showMovingWindow && chords && file && (
-        <MovingWindowChordVisualizer
-          audioFile={file}
-          chordData={chords}
-          audioRef={sharedAudioRef}
-          onBack={() => {
-            setShowMovingWindow(false);
-            setShowChordAnalyzer(true); // Go back to regular analyzer
-          }}
-        />
-      )}
-
-      {/* Main App Layout - always show navigation */}
-      {!showMovingWindow && (
-        <>
+      {/* Main App Layout */}
+      <>
           {/* Left Navigation */}
           <nav className="w-16 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4 flex-shrink-0">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-8 shadow-lg shadow-violet-500/20">
@@ -465,10 +448,6 @@ export default function App() {
             chordData={chords}
             onBack={() => {
               setShowChordAnalyzer(false);
-            }}
-            onMovingWindow={() => {
-              setShowChordAnalyzer(false);
-              setShowMovingWindow(true);
             }}
           />
         ) : (
@@ -866,7 +845,6 @@ export default function App() {
             authToken={authToken}
           />
         </>
-      )}
     </div>
   );
 }
