@@ -19,3 +19,6 @@ requests==2.31.0
 python-dotenv==1.0.0
 supabase==2.0.2
 modal>=0.65.0
+mir_eval==0.7
+sortedcontainers==2.4.0
+pyyaml==6.0.1
