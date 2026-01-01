@@ -273,11 +273,6 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
 
   // Create audio URL
   const audioUrl = audioFile ? URL.createObjectURL(audioFile) : null;
-  
-  // Debug logging
-  console.log('ChordAnalyzer - audioFile:', audioFile);
-  console.log('ChordAnalyzer - audioUrl:', audioUrl);
-  console.log('ChordAnalyzer - chordData length:', chordData?.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 to-zinc-900 text-zinc-100">
@@ -344,12 +339,6 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
           onCapoChange={setCapo}
         />
         
-        {/* Debug info for audio */}
-        {!audioUrl && (
-          <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl text-orange-400 text-sm">
-            ⚠️ Audio file not available for playback. File: {audioFile ? 'Present' : 'Missing'}
-          </div>
-        )}
 
         {/* Moving Window Button */}
         <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-4 border border-zinc-700/50">
