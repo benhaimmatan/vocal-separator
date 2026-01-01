@@ -24,3 +24,6 @@ A modern audio processing tool for separating vocals, detecting chords, and fetc
 - **Frontend**: React + Vite + TailwindCSS
 - **Backend**: FastAPI + Python
 - **Audio Processing**: Demucs, Librosa, Essentia
+
+
+# Updated ה' ינו  1 18:06:42 IST 2026: Added BTC-ISMIR19 model dependencies
