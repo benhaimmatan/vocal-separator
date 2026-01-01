@@ -318,18 +318,6 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
           />
         )}
         
-        {/* Audio debug info */}
-        {!audioUrl && audioFile && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-            ⚠️ Audio URL creation failed. File type: {audioFile.type}, Size: {audioFile.size}
-          </div>
-        )}
-        
-        {!audioFile && (
-          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-sm">
-            ⚠️ No audio file provided to ChordAnalyzer
-          </div>
-        )}
 
         {/* BPM Detection */}
         <BPMDetector audioData={processedChords} onBPMDetected={setBPM} />
