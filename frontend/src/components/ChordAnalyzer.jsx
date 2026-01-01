@@ -316,23 +316,22 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="p-6 max-w-6xl mx-auto space-y-6">
-        {/* Audio Element */}
-        {audioUrl && (
-          <audio
-            ref={audioRef}
-            src={audioUrl}
-            onLoadedMetadata={(e) => setDuration(e.target.duration)}
-            onTimeUpdate={handleTimeUpdate}
-            onEnded={() => setIsPlaying(false)}
-            onError={(e) => {
-              console.error('Audio error:', e);
-            }}
-            preload="metadata"
-          />
-        )}
-        
+          {/* Audio Element */}
+          {audioUrl && (
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              onLoadedMetadata={(e) => setDuration(e.target.duration)}
+              onTimeUpdate={handleTimeUpdate}
+              onEnded={() => setIsPlaying(false)}
+              onError={(e) => {
+                console.error('Audio error:', e);
+              }}
+              preload="metadata"
+            />
+          )}
 
-        {/* BPM Detection */}
+          {/* BPM Detection */}
         <BPMDetector audioData={processedChords} onBPMDetected={setBPM} />
 
         {/* Enhanced Chord Progression Display */}
