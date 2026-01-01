@@ -277,8 +277,19 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
     setCurrentChordIndex(chordIndex);
   };
 
-  // Create audio URL
-  const audioUrl = audioFile ? URL.createObjectURL(audioFile) : null;
+  // Create audio URL (memoized to prevent recreation on every render)
+  const audioUrl = React.useMemo(() => {
+    return audioFile ? URL.createObjectURL(audioFile) : null;
+  }, [audioFile]);
+
+  // Cleanup blob URL when component unmounts or audioFile changes
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
 
   // Debug logging
   useEffect(() => {
