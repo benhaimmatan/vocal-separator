@@ -205,15 +205,21 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
   };
 
   // Audio event handlers
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     if (!audioRef.current) return;
     
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Audio play error:', error);
+      setIsPlaying(false);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleStop = () => {
@@ -275,27 +281,28 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
   const audioUrl = audioFile ? URL.createObjectURL(audioFile) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-950 to-zinc-900 text-zinc-100">
+    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-zinc-950 to-zinc-900 text-zinc-100">
       {/* Header */}
-      <div className="p-6 border-b border-zinc-800/50 backdrop-blur-sm">
-        <div className="flex items-center justify-between max-w-6xl mx-auto">
-          <div>
-            <h1 className="text-2xl font-bold text-zinc-100">Chord Analyzer</h1>
-            <p className="text-sm text-zinc-400">
-              {audioFile?.name} • {processedChords.length} chords detected • BPM {bpm}
-            </p>
-          </div>
+      <div className="h-14 px-6 border-b border-zinc-800 flex items-center justify-between flex-shrink-0 bg-zinc-900/50">
+        <div className="flex items-center gap-4">
           <button
             onClick={onBack}
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-medium transition-colors"
+            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-medium transition-colors"
           >
-            Back
+            ← Back
           </button>
+          <div>
+            <h1 className="text-lg font-semibold text-zinc-100">Chord Analyzer</h1>
+          </div>
+        </div>
+        <div className="text-sm text-zinc-400">
+          {audioFile?.name} • {processedChords.length} chords • BPM {bpm}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 max-w-6xl mx-auto space-y-6">
         {/* Audio Element */}
         {audioUrl && (
           <audio
@@ -304,7 +311,24 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
             onLoadedMetadata={(e) => setDuration(e.target.duration)}
             onTimeUpdate={handleTimeUpdate}
             onEnded={() => setIsPlaying(false)}
+            onError={(e) => {
+              console.error('Audio error:', e);
+            }}
+            preload="metadata"
           />
+        )}
+        
+        {/* Audio debug info */}
+        {!audioUrl && audioFile && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+            ⚠️ Audio URL creation failed. File type: {audioFile.type}, Size: {audioFile.size}
+          </div>
+        )}
+        
+        {!audioFile && (
+          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-sm">
+            ⚠️ No audio file provided to ChordAnalyzer
+          </div>
         )}
 
         {/* BPM Detection */}
@@ -425,6 +449,8 @@ const ChordAnalyzer = ({ audioFile, chordData, onBack, onMovingWindow }) => {
           box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
         }
       `}</style>
+        </div>
+      </div>
     </div>
   );
 };

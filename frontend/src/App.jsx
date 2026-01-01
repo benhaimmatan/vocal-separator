@@ -372,22 +372,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
-      {/* Chord Analyzer Overlay */}
-      {showChordAnalyzer && chords && file && !showMovingWindow && (
-        <ChordAnalyzer
-          audioFile={file}
-          chordData={chords}
-          onBack={() => {
-            setShowChordAnalyzer(false);
-          }}
-          onMovingWindow={() => {
-            setShowChordAnalyzer(false);
-            setShowMovingWindow(true);
-          }}
-        />
-      )}
-
-      {/* Moving Window Chord Visualizer Overlay */}
+      {/* Moving Window Chord Visualizer - Full Overlay Only */}
       {showMovingWindow && chords && file && (
         <MovingWindowChordVisualizer
           audioFile={file}
@@ -400,8 +385,8 @@ export default function App() {
         />
       )}
 
-      {/* Main App - hidden when any chord analyzer is open */}
-      {!showChordAnalyzer && !showMovingWindow && (
+      {/* Main App Layout - always show navigation */}
+      {!showMovingWindow && (
         <>
           {/* Left Navigation */}
           <nav className="w-16 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4 flex-shrink-0">
@@ -473,9 +458,23 @@ export default function App() {
           )}
         </header>
 
-        <div className="flex-1 overflow-auto">
-          <div className="max-w-2xl mx-auto p-8">
-            <p className="text-zinc-400 mb-8">{getDescription()}</p>
+        {/* Main Content Area */}
+        {showChordAnalyzer && chords && file ? (
+          <ChordAnalyzer
+            audioFile={file}
+            chordData={chords}
+            onBack={() => {
+              setShowChordAnalyzer(false);
+            }}
+            onMovingWindow={() => {
+              setShowChordAnalyzer(false);
+              setShowMovingWindow(true);
+            }}
+          />
+        ) : (
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-2xl mx-auto p-8">
+              <p className="text-zinc-400 mb-8">{getDescription()}</p>
 
             {error && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 animate-fadeIn">
@@ -849,8 +848,9 @@ export default function App() {
                 )}
               </div>
             )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
           {/* Modals */}
