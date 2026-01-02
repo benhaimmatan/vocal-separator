@@ -14,7 +14,6 @@ Author: Enhanced for AudioAlchemy Project
 
 import numpy as np
 import librosa
-import essentia.standard as es
 import logging
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
@@ -22,9 +21,18 @@ from scipy import signal
 from scipy.stats import mode
 import warnings
 
-# Configure logging
+# Configure logging first
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Try to import essentia, fall back to librosa-only mode if unavailable
+try:
+    import essentia.standard as es
+    ESSENTIA_AVAILABLE = True
+except ImportError:
+    logger.warning("Essentia not available, using librosa-only mode for rhythm analysis")
+    ESSENTIA_AVAILABLE = False
+    es = None
 
 @dataclass
 class RhythmAnalysisResult:
@@ -60,24 +68,34 @@ class EnhancedRhythmAnalyzer:
         self.sample_rate = sample_rate
         self.frame_size = 2048
         self.hop_size = 512
-        
-        # Initialize Essentia algorithms
-        self.rhythm_extractor = es.RhythmExtractor2013(method="multifeature")
-        self.beat_tracker = es.BeatTrackerMultiFeature()
-        self.bpm_histogram = es.BpmHistogramDescriptors()
+
+        # Initialize Essentia algorithms if available
+        if ESSENTIA_AVAILABLE:
+            self.rhythm_extractor = es.RhythmExtractor2013(method="multifeature")
+            self.beat_tracker = es.BeatTrackerMultiFeature()
+            self.bpm_histogram = es.BpmHistogramDescriptors()
+        else:
+            self.rhythm_extractor = None
+            self.beat_tracker = None
+            self.bpm_histogram = None
         
     def analyze_rhythm(self, audio: np.ndarray) -> RhythmAnalysisResult:
         """
         Perform comprehensive rhythm analysis
-        
+
         Args:
             audio: Audio signal as numpy array
-            
+
         Returns:
             RhythmAnalysisResult with all rhythm information
         """
         logger.info("Starting enhanced rhythm analysis...")
-        
+
+        # Use librosa fallback if Essentia is not available
+        if not ESSENTIA_AVAILABLE:
+            logger.info("Using librosa-only rhythm analysis (Essentia not available)")
+            return self._fallback_analysis(audio)
+
         try:
             # 1. Primary rhythm extraction using Essentia
             bpm, beats, confidence, estimates, intervals = self.rhythm_extractor(audio)
