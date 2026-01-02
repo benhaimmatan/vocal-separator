@@ -375,26 +375,23 @@ class EnhancedRhythmAnalyzer:
         try:
             logger.info(f"🔍 Validating BPM: {bpm:.1f} (confidence: {confidence:.2f})")
             
-            # ENHANCED: More aggressive octave error detection for ballads
-            # Check for octave errors (double-time detection) - expanded range
-            if 100 <= bpm <= 200:  # Much wider range for potential octave errors
+            # FIXED: Less aggressive octave error detection - narrower range, higher thresholds
+            # Check for octave errors (double-time detection)
+            if 120 <= bpm <= 160:  # FIXED: Narrowed from 100-200 to reduce false positives
                 half_bpm = bpm / 2.0
-                
-                # Analyze octave error probability with enhanced ballad detection
+
+                # Analyze octave error probability
                 octave_confidence = self._analyze_octave_error_probability(bpm, half_bpm, intervals)
-                
-                # SUPER AGGRESSIVE: More aggressive correction for potential ballads
-                if octave_confidence > 0.5:  # Lowered from 0.6 to 0.5
+
+                # FIXED: Higher confidence thresholds to avoid over-correction
+                if octave_confidence > 0.75:  # FIXED: Raised from 0.5 to 0.75
                     logger.info(f"🎵 HIGH CONFIDENCE octave error detected: {bpm:.1f} → {half_bpm:.1f} BPM (confidence: {octave_confidence:.2f})")
                     return half_bpm, min(0.95, confidence + 0.1)
-                elif octave_confidence > 0.35:  # NEW: Lower medium confidence threshold
+                elif octave_confidence > 0.65:  # FIXED: Raised from 0.35 to 0.65
                     logger.info(f"🎵 MEDIUM CONFIDENCE octave error detected: {bpm:.1f} → {half_bpm:.1f} BPM (confidence: {octave_confidence:.2f})")
                     return half_bpm, min(0.85, confidence + 0.05)
-                elif octave_confidence > 0.25:  # NEW: Low confidence threshold for strong patterns
-                    logger.info(f"🎵 LOW CONFIDENCE octave error detected: {bpm:.1f} → {half_bpm:.1f} BPM (confidence: {octave_confidence:.2f})")
-                    return half_bpm, min(0.75, confidence)
                 else:
-                    logger.info(f"🎵 Possible octave error detected but very low confidence: {octave_confidence:.2f}")
+                    logger.info(f"🎵 Octave confidence too low ({octave_confidence:.2f}), keeping original BPM")
             
             # Check for half-time errors (under-detection) - also expanded
             if 40 <= bpm <= 80:  # Expanded range

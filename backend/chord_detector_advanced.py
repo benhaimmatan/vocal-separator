@@ -22,7 +22,11 @@ from btc_model import BTC_model, HParams
 from utils.mir_eval_modules import idx2chord, idx2voca_chord
 
 # Import enhanced rhythm analysis
-from .enhanced_rhythm_analysis import EnhancedRhythmAnalyzer
+# FIX: Use absolute import to avoid import errors in different environments
+try:
+    from .enhanced_rhythm_analysis import EnhancedRhythmAnalyzer
+except ImportError:
+    from enhanced_rhythm_analysis import EnhancedRhythmAnalyzer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
