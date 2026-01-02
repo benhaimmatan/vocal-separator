@@ -1,5 +1,5 @@
 # FastAPI + React deployment for HuggingFace Spaces
-# Build v2.1 - 2026-01-02 15:32 - Force complete frontend rebuild
+# Build v2.1 - 2026-01-02 15:38 - Piano key CSS fix deployed
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
@@ -10,7 +10,7 @@ RUN npm cache clean --force && npm install
 
 COPY frontend/ ./
 # Force fresh build without cache (remove any existing dist)
-RUN rm -rf dist && npm run build && echo "Frontend build timestamp: 2026-01-02-15:32" > dist/.build-timestamp
+RUN rm -rf dist && npm run build && echo "Frontend build timestamp: 2026-01-02-15:38" > dist/.build-timestamp
 
 # Python backend stage
 FROM python:3.10-slim
