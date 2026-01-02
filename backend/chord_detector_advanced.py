@@ -35,9 +35,19 @@ class AdvancedChordDetector:
     """
     
     def __init__(self):
-        self.model = None
+        self.btc_model = None
         self.autochord_available = False
         self.device = self._get_device()
+
+        # Initialize BTC model
+        logger.info("Initializing AdvancedChordDetector...")
+        self._load_btc_model()
+        self._load_autochord()
+
+        if self.btc_model:
+            logger.info("✅ BTC-ISMIR19 model ready")
+        else:
+            logger.warning("⚠️ BTC model not available, chord detection may be limited")
         
     def _get_device(self):
         """Determine the best available device for computation"""
@@ -113,17 +123,6 @@ class AdvancedChordDetector:
         except ImportError:
             logger.warning("autochord library not available")
             return False
-    
-    def initialize(self):
-        """Initialize all available models"""
-        btc_loaded = self._load_btc_model()
-        autochord_loaded = self._load_autochord()
-        
-        if not btc_loaded and not autochord_loaded:
-            logger.error("No chord detection models available")
-            return False
-        
-        return True
     
     def detect_chords_advanced(
         self,
@@ -522,8 +521,8 @@ def get_chord_detector() -> AdvancedChordDetector:
     
     if _detector_instance is None:
         _detector_instance = AdvancedChordDetector()
-        if not _detector_instance.initialize():
-            logger.error("Failed to initialize chord detector")
+        if not _detector_instance.btc_model:
+            logger.error("Failed to initialize chord detector - BTC model not loaded")
             raise RuntimeError("Chord detector initialization failed")
     
     return _detector_instance
