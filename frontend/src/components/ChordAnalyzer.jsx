@@ -319,8 +319,9 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
             <h1 className="text-lg font-semibold text-zinc-100">Chord Analyzer</h1>
           </div>
         </div>
-        <div className="text-sm text-zinc-400">
-          {audioFile?.name} • {processedChords.length} chords • {Math.round(bpm)} BPM
+        <div className="text-sm text-zinc-400 flex items-center gap-3">
+          <span>{audioFile?.name} • {processedChords.length} chords • {Math.round(bpm)} BPM</span>
+          <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-xs font-mono">v2.1</span>
         </div>
       </div>
 

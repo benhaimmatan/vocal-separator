@@ -409,6 +409,9 @@ const PianoChordDiagram = ({ chordName }) => {
   const normalizedChordName = normalizeChordName(chordName);
   let notes = CHORDS[normalizedChordName] || [];
 
+  // Debug logging
+  console.log('[PianoChordDiagram v2.1] Input:', chordName, '→ Normalized:', normalizedChordName, '→ Notes:', notes);
+
   // If chord not found in lookup table, try to calculate it dynamically
   if (notes.length === 0 && normalizedChordName && normalizedChordName !== 'N' && normalizedChordName !== 'N/C' && normalizedChordName !== '—') {
     // Parse the chord to extract root and quality
