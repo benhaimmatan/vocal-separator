@@ -173,6 +173,61 @@ const CHORDS = {
   'Bbminmaj7': ['A#', 'C#', 'F', 'A'],
   'Bminmaj7': ['B', 'D', 'F#', 'A#'],
 
+  // Minor 6th chords (min6 = 1, b3, 5, 6)
+  'Cmin6': ['C', 'D#', 'G', 'A'],
+  'C#min6': ['C#', 'E', 'G#', 'A#'],
+  'Dbmin6': ['C#', 'E', 'G#', 'A#'],
+  'Dmin6': ['D', 'F', 'A', 'B'],
+  'D#min6': ['D#', 'F#', 'A#', 'C'],
+  'Ebmin6': ['D#', 'F#', 'A#', 'C'],
+  'Emin6': ['E', 'G', 'B', 'C#'],
+  'Fmin6': ['F', 'G#', 'C', 'D'],
+  'F#min6': ['F#', 'A', 'C#', 'D#'],
+  'Gbmin6': ['F#', 'A', 'C#', 'D#'],
+  'Gmin6': ['G', 'A#', 'D', 'E'],
+  'G#min6': ['G#', 'B', 'D#', 'F'],
+  'Abmin6': ['G#', 'B', 'D#', 'F'],
+  'Amin6': ['A', 'C', 'E', 'F#'],
+  'A#min6': ['A#', 'C#', 'F', 'G'],
+  'Bbmin6': ['A#', 'C#', 'F', 'G'],
+  'Bmin6': ['B', 'D', 'F#', 'G#'],
+
+  // Major 6th chords (maj6/6 = 1, 3, 5, 6)
+  'C6': ['C', 'E', 'G', 'A'],
+  'Cmaj6': ['C', 'E', 'G', 'A'],
+  'C#6': ['C#', 'F', 'G#', 'A#'],
+  'C#maj6': ['C#', 'F', 'G#', 'A#'],
+  'Db6': ['C#', 'F', 'G#', 'A#'],
+  'Dbmaj6': ['C#', 'F', 'G#', 'A#'],
+  'D6': ['D', 'F#', 'A', 'B'],
+  'Dmaj6': ['D', 'F#', 'A', 'B'],
+  'D#6': ['D#', 'G', 'A#', 'C'],
+  'D#maj6': ['D#', 'G', 'A#', 'C'],
+  'Eb6': ['D#', 'G', 'A#', 'C'],
+  'Ebmaj6': ['D#', 'G', 'A#', 'C'],
+  'E6': ['E', 'G#', 'B', 'C#'],
+  'Emaj6': ['E', 'G#', 'B', 'C#'],
+  'F6': ['F', 'A', 'C', 'D'],
+  'Fmaj6': ['F', 'A', 'C', 'D'],
+  'F#6': ['F#', 'A#', 'C#', 'D#'],
+  'F#maj6': ['F#', 'A#', 'C#', 'D#'],
+  'Gb6': ['F#', 'A#', 'C#', 'D#'],
+  'Gbmaj6': ['F#', 'A#', 'C#', 'D#'],
+  'G6': ['G', 'B', 'D', 'E'],
+  'Gmaj6': ['G', 'B', 'D', 'E'],
+  'G#6': ['G#', 'C', 'D#', 'F'],
+  'G#maj6': ['G#', 'C', 'D#', 'F'],
+  'Ab6': ['G#', 'C', 'D#', 'F'],
+  'Abmaj6': ['G#', 'C', 'D#', 'F'],
+  'A6': ['A', 'C#', 'E', 'F#'],
+  'Amaj6': ['A', 'C#', 'E', 'F#'],
+  'A#6': ['A#', 'D', 'F', 'G'],
+  'A#maj6': ['A#', 'D', 'F', 'G'],
+  'Bb6': ['A#', 'D', 'F', 'G'],
+  'Bbmaj6': ['A#', 'D', 'F', 'G'],
+  'B6': ['B', 'D#', 'F#', 'G#'],
+  'Bmaj6': ['B', 'D#', 'F#', 'G#'],
+
   // Augmented chords (aug = 1, 3, #5)
   'Caug': ['C', 'E', 'G#'],
   'C#aug': ['C#', 'F', 'A'],
@@ -255,6 +310,12 @@ const calculateChordNotes = (root, quality) => {
     case 'maj7':
     case 'M7': // Major 7th: 1, 3, 5, 7 (0, 4, 7, 11 semitones)
       return [getNote(0), getNote(4), getNote(7), getNote(11)];
+    case '6':
+    case 'maj6': // Major 6th: 1, 3, 5, 6 (0, 4, 7, 9 semitones)
+      return [getNote(0), getNote(4), getNote(7), getNote(9)];
+    case 'min6':
+    case 'm6': // Minor 6th: 1, b3, 5, 6 (0, 3, 7, 9 semitones)
+      return [getNote(0), getNote(3), getNote(7), getNote(9)];
     case 'dim':
     case '°': // Diminished: 1, b3, b5 (0, 3, 6 semitones)
       return [getNote(0), getNote(3), getNote(6)];
@@ -310,6 +371,11 @@ const normalizeChordName = (chordName) => {
         return `${root}maj7`;
       case 'min7':
         return `${root}m7`;
+      case 'min6':
+        return `${root}min6`;
+      case 'maj6':
+      case '6':
+        return `${root}6`;
       case 'minmaj7':
       case 'mM7':
         return `${root}minmaj7`;
@@ -336,7 +402,7 @@ const formatChordForDisplay = (chordName) => {
 
   let formatted = chordName;
 
-  // Handle colon notation (e.g., "C:min" -> "Cm", "E:hdim7" -> "Em7♭5")
+  // Handle colon notation (e.g., "C:min" -> "Cm", "E:hdim7" -> "Eø7")
   if (formatted.includes(':')) {
     const [root, quality] = formatted.split(':');
     switch (quality) {
@@ -367,6 +433,13 @@ const formatChordForDisplay = (chordName) => {
         break;
       case 'min7':
         formatted = `${root}m7`;
+        break;
+      case 'min6':
+        formatted = `${root}m6`;
+        break;
+      case 'maj6':
+      case '6':
+        formatted = `${root}6`;
         break;
       case 'minmaj7':
       case 'mM7':
@@ -405,32 +478,50 @@ const formatChordForDisplay = (chordName) => {
 };
 
 const PianoChordDiagram = ({ chordName }) => {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('[PianoChordDiagram] 1. RAW INPUT:', JSON.stringify(chordName));
+
   // Normalize the chord name to handle different detection system formats
   const normalizedChordName = normalizeChordName(chordName);
-  let notes = CHORDS[normalizedChordName] || [];
+  console.log('[PianoChordDiagram] 2. NORMALIZED:', JSON.stringify(normalizedChordName));
 
-  // Debug logging
-  console.log('[PianoChordDiagram v2.1] Input:', chordName, '→ Normalized:', normalizedChordName, '→ Notes:', notes);
+  let notes = CHORDS[normalizedChordName] || [];
+  console.log('[PianoChordDiagram] 3. LOOKUP RESULT:', notes.length > 0 ? notes : 'NOT FOUND IN CHORDS TABLE');
 
   // If chord not found in lookup table, try to calculate it dynamically
   if (notes.length === 0 && normalizedChordName && normalizedChordName !== 'N' && normalizedChordName !== 'N/C' && normalizedChordName !== '—') {
+    console.log('[PianoChordDiagram] 4. ATTEMPTING DYNAMIC CALCULATION...');
+
     // Parse the chord to extract root and quality
     const chordRegex = /^([A-G][#b]?)(.*)$/;
     const match = normalizedChordName.match(chordRegex);
+    console.log('[PianoChordDiagram] 5. REGEX MATCH:', match);
+
     if (match) {
       const [, root, quality] = match;
+      console.log('[PianoChordDiagram] 6. PARSED - Root:', root, 'Quality:', quality);
+
       // Normalize root note (b to #)
-      const normalizedRoot = root.replace('b', function(char, index) {
-        // Map flat notes to their sharp equivalents
-        const flatToSharp = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
-        return flatToSharp[root] || root;
-      });
+      const flatToSharp = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+      const normalizedRoot = flatToSharp[root] || root;
+      console.log('[PianoChordDiagram] 7. NORMALIZED ROOT:', normalizedRoot, '(from:', root, ')');
+
       const calculatedNotes = calculateChordNotes(normalizedRoot, quality);
+      console.log('[PianoChordDiagram] 8. CALCULATED NOTES:', calculatedNotes);
+
       if (calculatedNotes) {
         notes = calculatedNotes;
+        console.log('[PianoChordDiagram] 9. SUCCESS - Using calculated notes:', notes);
+      } else {
+        console.log('[PianoChordDiagram] 9. FAILED - calculateChordNotes returned null');
       }
+    } else {
+      console.log('[PianoChordDiagram] 5. REGEX FAILED - Could not parse chord');
     }
   }
+
+  console.log('[PianoChordDiagram] 10. FINAL NOTES FOR HIGHLIGHTING:', notes);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Format for display
   const displayChordName = formatChordForDisplay(chordName);
