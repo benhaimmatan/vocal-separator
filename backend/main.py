@@ -381,16 +381,17 @@ async def detect_chords(
         if job_id:
             supabase_client.update_job_status(job_id, "processing")
         
-        # Use Modal GPU processing if available
-        if MODAL_ENABLED:
+        # DISABLED: Modal GPU has old chroma matching code, not real BTC model
+        # Using CPU processing with fixed BTC-ISMIR19 implementation instead
+        if False and MODAL_ENABLED:
             logger.info(f"Using Modal GPU chord detection (simplicity: {simplicity_preference}, BPM: {bpm_override})")
             result = ModalClient.detect_chords(content, simplicity_preference, bpm_override)
-            
+
             if result["success"]:
                 # Update job with results
                 if job_id:
                     supabase_client.update_job_status(job_id, "completed", {"chords": result["chords"]})
-                
+
                 return {
                     "success": True,
                     "job_id": job_id,
@@ -400,9 +401,9 @@ async def detect_chords(
                 if job_id:
                     supabase_client.update_job_status(job_id, "failed", error_message=result.get("error"))
                 raise HTTPException(status_code=500, detail=result.get("error"))
-        
+
         else:
-            # Fallback to CPU processing
+            # Use CPU processing with REAL BTC-ISMIR19 model (FIXED)
             logger.info("Using CPU chord detection (fallback)")
             
             with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp:
