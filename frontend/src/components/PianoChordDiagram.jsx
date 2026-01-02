@@ -479,6 +479,7 @@ const formatChordForDisplay = (chordName) => {
 
 const PianoChordDiagram = ({ chordName }) => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('[PianoChordDiagram] COMPONENT RE-RENDERED');
   console.log('[PianoChordDiagram] 1. RAW INPUT:', JSON.stringify(chordName));
 
   // Normalize the chord name to handle different detection system formats
@@ -530,13 +531,16 @@ const PianoChordDiagram = ({ chordName }) => {
   // Render white keys
   const whiteKeys = WHITE_KEYS.map((key, idx) => {
     const isActive = notes.includes(key);
+    if (isActive) {
+      console.log(`[PianoChordDiagram] White key "${key}" is ACTIVE - applying bg-blue-400`);
+    }
     return (
       <div
         key={key}
-        className={`w-8 h-20 bg-white border border-zinc-400 flex items-end justify-center pb-2 text-xs font-medium transition-all duration-200 ${
-          isActive 
-            ? 'bg-blue-400 text-white shadow-lg' 
-            : 'hover:bg-zinc-100 text-zinc-600'
+        className={`w-8 h-20 border border-zinc-400 flex items-end justify-center pb-2 text-xs font-medium transition-all duration-200 ${
+          isActive
+            ? 'bg-blue-400 text-white shadow-lg'
+            : 'bg-white hover:bg-zinc-100 text-zinc-600'
         }`}
         style={{
           borderRadius: '0 0 4px 4px',
@@ -551,14 +555,17 @@ const PianoChordDiagram = ({ chordName }) => {
   // Render black keys (skip empty slots)
   const blackKeys = BLACK_KEYS.map((key, idx) => {
     if (!key) return <div key={idx} className="w-6" />; // spacer
-    
+
     const isActive = notes.includes(key);
+    if (isActive) {
+      console.log(`[PianoChordDiagram] Black key "${key}" is ACTIVE - applying bg-blue-600`);
+    }
     return (
       <div
         key={key}
         className={`w-6 h-12 flex items-end justify-center pb-1 text-xs font-medium transition-all duration-200 ${
-          isActive 
-            ? 'bg-blue-600 text-white shadow-lg' 
+          isActive
+            ? 'bg-blue-600 text-white shadow-lg'
             : 'bg-zinc-800 hover:bg-zinc-700 text-white'
         }`}
         style={{
