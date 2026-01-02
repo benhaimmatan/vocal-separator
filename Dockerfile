@@ -1,15 +1,16 @@
 # FastAPI + React deployment for HuggingFace Spaces
-# Build v2.1 - 2026-01-02 15:25 - Force rebuild for BPM and piano fixes
+# Build v2.1 - 2026-01-02 15:32 - Force complete frontend rebuild
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
 # Copy frontend files
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm cache clean --force && npm install
 
 COPY frontend/ ./
-RUN npm run build
+# Force fresh build without cache (remove any existing dist)
+RUN rm -rf dist && npm run build && echo "Frontend build timestamp: 2026-01-02-15:32" > dist/.build-timestamp
 
 # Python backend stage
 FROM python:3.10-slim
