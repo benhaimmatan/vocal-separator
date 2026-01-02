@@ -206,7 +206,7 @@ def _collate_fn(batch):
         sample = batch[i]
         feature = sample['feature']
         chord = sample['chord']
-        diff = np.diff(chord, axis=0).astype(np.bool)
+        diff = np.diff(chord, axis=0).astype(np.bool_)
         idx = np.insert(diff, 0, True, axis=0)
         chord_lens[i] = np.sum(idx).item(0)
         chords.extend(chord)
