@@ -77,7 +77,7 @@ class AdvancedChordDetector:
                 return False
 
             # Initialize and load model
-            self.model = BTC_model(config=config.model).to(self.device)
+            self.btc_model = BTC_model(config=config.model).to(self.device)
             checkpoint = torch.load(model_file, map_location=self.device, weights_only=False)
 
             # Store normalization parameters
@@ -85,11 +85,14 @@ class AdvancedChordDetector:
             self.btc_std = checkpoint['std']
 
             # Load model state
-            self.model.load_state_dict(checkpoint['model'])
-            self.model.eval()
+            self.btc_model.load_state_dict(checkpoint['model'])
+            self.btc_model.eval()
 
             # Store config for feature extraction
             self.btc_config = config
+
+            # Set up chord index mapping
+            self.idx_to_chord = idx2voca_chord()
 
             logger.info("✅ BTC-ISMIR19 model loaded successfully (170 chord classes)")
             return True
@@ -269,94 +272,108 @@ class AdvancedChordDetector:
             return [i * beat_interval for i in range(int(duration / beat_interval) + 1)]
     
     def _detect_chords_btc(
-        self, 
-        audio: np.ndarray, 
-        sr: int, 
+        self,
+        audio: np.ndarray,
+        sr: int,
         progress_callback: Optional[Callable] = None
     ) -> List[Dict]:
         """
-        Primary chord detection using BTC-ISMIR19 approach
-        For now, this uses an enhanced version of the existing simple detection
+        Primary chord detection using BTC-ISMIR19 model
         """
-        
-        # Extract chroma features
-        chroma = librosa.feature.chroma_stft(y=audio, sr=sr, hop_length=512)
-        
-        # Enhanced chord templates (more comprehensive than basic version)
-        chord_templates = {
-            # Major chords
-            'C': [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
-            'C#': [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
-            'D': [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
-            'D#': [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
-            'E': [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-            'F': [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0],
-            'F#': [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-            'G': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-            'G#': [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
-            'A': [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
-            'A#': [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0],
-            'B': [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1],
-            
-            # Minor chords
-            'Cm': [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
-            'C#m': [0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
-            'Dm': [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0],
-            'D#m': [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
-            'Em': [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
-            'Fm': [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
-            'F#m': [0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
-            'Gm': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
-            'G#m': [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
-            'Am': [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
-            'A#m': [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0],
-            'Bm': [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1],
-            
-            # Extended chords (simplified representations)
-            'C7': [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0],  # Add b7
-            'Dm7': [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1],  # Add b7
-            'Em7': [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],  # Add b7
-            'F7': [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],   # Add b7
-            'G7': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1],   # Add b7
-            'Am7': [0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0],  # Add b7
-            'Bm7': [0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1], # Add b7
-        }
-        
-        detected_chords = []
-        hop_length = 512
-        frame_rate = sr / hop_length
-        
-        for i in range(chroma.shape[1]):
-            if progress_callback and i % 100 == 0:
-                progress = 0.3 + (i / chroma.shape[1]) * 0.4  # 30% to 70%
-                progress_callback(progress, f"Analyzing frame {i+1}/{chroma.shape[1]}...")
-            
-            frame_chroma = chroma[:, i]
-            
-            # Find best matching chord template
-            best_chord = 'N'
-            best_score = 0
-            
-            for chord_name, template in chord_templates.items():
-                # Enhanced correlation calculation
-                template_norm = np.array(template)
-                template_norm = template_norm / (np.linalg.norm(template_norm) + 1e-10)
-                frame_norm = frame_chroma / (np.linalg.norm(frame_chroma) + 1e-10)
-                
-                score = np.dot(frame_norm, template_norm)
-                
-                if score > best_score and score > 0.6:  # Higher threshold for better accuracy
-                    best_score = score
-                    best_chord = chord_name
-            
-            timestamp = i / frame_rate
-            detected_chords.append({
-                "time": timestamp,
-                "chord": best_chord,
-                "confidence": float(best_score)
-            })
-        
-        return detected_chords
+        if not hasattr(self, 'btc_model') or self.btc_model is None:
+            logger.warning("BTC model not loaded, skipping BTC detection")
+            return []
+
+        try:
+            from utils.mir_eval_modules import audio_file_to_features
+            import tempfile
+            import soundfile as sf
+
+            # Save audio to temporary WAV file for BTC processing
+            temp_wav = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
+            temp_wav.close()
+            sf.write(temp_wav.name, audio, sr)
+            audio_path = temp_wav.name
+
+            try:
+                # Load and process audio
+                feature, feature_per_second, song_length_second = audio_file_to_features(
+                    audio_path, self.btc_config
+                )
+
+                # Prepare features
+                feature = feature.T
+                feature = (feature - self.btc_mean) / self.btc_std
+                time_unit = feature_per_second
+                n_timestep = self.btc_config.model['timestep']
+
+                # Pad features
+                num_pad = n_timestep - (feature.shape[0] % n_timestep)
+                feature = np.pad(feature, ((0, num_pad), (0, 0)), mode="constant", constant_values=0)
+                num_instance = feature.shape[0] // n_timestep
+
+                # Detect chords
+                results = []
+                start_time = 0.0
+                prev_chord = None
+
+                with torch.no_grad():
+                    feature_tensor = torch.tensor(feature, dtype=torch.float32).unsqueeze(0).to(self.device)
+
+                    for t in range(num_instance):
+                        if progress_callback and t % 10 == 0:
+                            progress = 0.3 + (t / num_instance) * 0.4  # 30% to 70%
+                            progress_callback(progress, f"BTC processing {t+1}/{num_instance}...")
+
+                        self_attn_output, _ = self.btc_model.self_attn_layers(
+                            feature_tensor[:, n_timestep * t:n_timestep * (t + 1), :]
+                        )
+                        prediction, _ = self.btc_model.output_layer(self_attn_output)
+                        prediction = prediction.squeeze()
+
+                        for i in range(n_timestep):
+                            current_time = time_unit * (n_timestep * t + i)
+                            current_chord = prediction[i].item()
+
+                            if t == 0 and i == 0:
+                                prev_chord = current_chord
+                                continue
+
+                            if current_chord != prev_chord:
+                                chord_name = self.idx_to_chord[prev_chord]
+                                results.append({
+                                    "time": start_time,
+                                    "chord": chord_name,
+                                    "confidence": 1.0
+                                })
+                                start_time = current_time
+                                prev_chord = current_chord
+
+                            # Handle last segment
+                            if t == num_instance - 1 and i + num_pad == n_timestep:
+                                if start_time != current_time:
+                                    chord_name = self.idx_to_chord[prev_chord]
+                                    results.append({
+                                        "time": start_time,
+                                        "chord": chord_name,
+                                        "confidence": 1.0
+                                    })
+                                break
+
+                logger.info(f"BTC detected {len(results)} chord segments")
+                return results
+
+            finally:
+                # Clean up temp file
+                import os
+                if os.path.exists(audio_path):
+                    os.unlink(audio_path)
+
+        except Exception as e:
+            logger.error(f"BTC chord detection failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
     
     def _ensemble_chord_detection(
         self,
