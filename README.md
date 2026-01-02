@@ -26,4 +26,4 @@ A modern audio processing tool for separating vocals, detecting chords, and fetc
 - **Audio Processing**: Demucs, Librosa, Essentia
 
 
-# Updated ו' ינו  2 08:50:24 IST 2026: Implemented real BTC-ISMIR19 model inference
+# Updated ו' ינו  2 15:25:00 IST 2026: Fixed BPM display and piano visualization (v2.1)

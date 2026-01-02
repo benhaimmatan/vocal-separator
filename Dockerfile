@@ -1,4 +1,5 @@
 # FastAPI + React deployment for HuggingFace Spaces
+# Build v2.1 - 2026-01-02 15:25 - Force rebuild for BPM and piano fixes
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
