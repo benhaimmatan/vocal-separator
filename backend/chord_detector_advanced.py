@@ -21,11 +21,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'BTC-ISMIR19'))
 from btc_model import BTC_model, HParams
 from utils.mir_eval_modules import idx2chord, idx2voca_chord
 
-# Import enhanced rhythm analysis (try relative import first, then absolute)
-try:
-    from .enhanced_rhythm_analysis import EnhancedRhythmAnalyzer
-except ImportError:
-    from enhanced_rhythm_analysis import EnhancedRhythmAnalyzer
+# Import enhanced rhythm analysis
+from .enhanced_rhythm_analysis import EnhancedRhythmAnalyzer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
