@@ -6,10 +6,10 @@ const formatChordForDisplay = (chordName) => {
   if (!chordName || chordName === 'N/C' || chordName === '—' || chordName === 'N') {
     return chordName;
   }
-  
+
   let formatted = chordName;
-  
-  // Handle colon notation (e.g., "C:min" -> "Cm", "F:7" -> "F7")
+
+  // Handle colon notation (e.g., "C:min" -> "Cm", "E:hdim7" -> "Eø7")
   if (formatted.includes(':')) {
     const [root, quality] = formatted.split(':');
     switch (quality) {
@@ -22,26 +22,58 @@ const formatChordForDisplay = (chordName) => {
       case 'dim':
         formatted = `${root}dim`;
         break;
+      case 'dim7':
+        formatted = `${root}°7`;
+        break;
+      case 'hdim7':
+      case 'm7b5':
+        formatted = `${root}ø7`; // Half-diminished symbol
+        break;
       case 'aug':
-        formatted = `${root}aug`;
+        formatted = `${root}+`;
         break;
       case '7':
         formatted = `${root}7`;
         break;
       case 'maj7':
-        formatted = `${root}maj7`;
+        formatted = `${root}M7`;
         break;
       case 'min7':
         formatted = `${root}m7`;
+        break;
+      case 'minmaj7':
+      case 'mM7':
+        formatted = `${root}mM7`;
+        break;
+      case 'sus2':
+        formatted = `${root}sus2`;
+        break;
+      case 'sus4':
+      case 'sus':
+        formatted = `${root}sus4`;
         break;
       default:
         formatted = `${root}${quality}`;
     }
   }
-  
+
+  // Additional formatting for better readability
+  // Convert hdim7 to half-diminished symbol
+  formatted = formatted.replace(/hdim7/g, 'ø7');
+  // Convert dim7 to diminished symbol
+  formatted = formatted.replace(/dim7/g, '°7');
+  // Convert dim to diminished symbol (but not dim7)
+  formatted = formatted.replace(/dim(?!7)/g, '°');
+  // Convert aug to + symbol
+  formatted = formatted.replace(/aug/g, '+');
+  // Convert maj7 to M7 (cleaner notation)
+  formatted = formatted.replace(/maj7/g, 'M7');
+  // Convert minmaj7 to mM7
+  formatted = formatted.replace(/minmaj7/g, 'mM7');
+
   // Convert A# to Bb (more common in music notation)
   formatted = formatted.replace(/A#/g, 'Bb');
-  
+
   return formatted;
 };
 
@@ -63,8 +95,8 @@ const ChordProgressionBar = ({
   const [currentChordIndex, setCurrentChordIndex] = useState(-1);
   const scrollContainerRef = useRef(null);
 
-  const estimatedBPM = bpm;
-  const beatsPerSecond = estimatedBPM / 60;
+  const estimatedBPM = Math.round(bpm);
+  const beatsPerSecond = bpm / 60; // Use original BPM for calculations
 
   // Enhanced rhythm analysis using backend data
   useEffect(() => {

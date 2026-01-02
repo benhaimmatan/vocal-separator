@@ -320,7 +320,7 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
           </div>
         </div>
         <div className="text-sm text-zinc-400">
-          {audioFile?.name} • {processedChords.length} chords • BPM {bpm}
+          {audioFile?.name} • {processedChords.length} chords • {Math.round(bpm)} BPM
         </div>
       </div>
 
