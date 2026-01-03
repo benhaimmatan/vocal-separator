@@ -321,7 +321,7 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
         </div>
         <div className="text-sm text-zinc-400 flex items-center gap-3">
           <span>{audioFile?.name} • {processedChords.length} chords • {Math.round(bpm)} BPM</span>
-          <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-xs font-mono">v2.1</span>
+          <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-xs font-mono">v2.2</span>
         </div>
       </div>
 
