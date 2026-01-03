@@ -534,60 +534,12 @@ export default function App() {
                 {file && !processing && !chords && (
                   <>
                     <FileCard file={file} onRemove={() => setFile(null)} />
-                    
-                    {/* Advanced Chord Detection Parameters */}
-                    <div className="p-5 bg-zinc-800/50 rounded-xl border border-zinc-700/50 space-y-4">
-                      <h3 className="text-sm font-medium text-zinc-200">Advanced Chord Detection</h3>
-                      
-                      {/* Simplicity Preference Slider */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <label className="text-sm text-zinc-400">Simplicity Preference</label>
-                          <span className="text-xs font-mono text-zinc-300 bg-zinc-700 px-2 py-1 rounded">
-                            {(simplicityPreference * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-zinc-500">Complex</span>
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={simplicityPreference}
-                            onChange={(e) => setSimplicityPreference(parseFloat(e.target.value))}
-                            className="flex-1 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer slider"
-                          />
-                          <span className="text-xs text-zinc-500">Simple</span>
-                        </div>
-                        <p className="text-xs text-zinc-500">
-                          Higher values prefer simpler chord progressions by filtering out short chord changes
-                        </p>
-                      </div>
-                      
-                      {/* BPM Override Input */}
-                      <div className="space-y-2">
-                        <label className="text-sm text-zinc-400">BPM Override (optional)</label>
-                        <input
-                          type="number"
-                          min="60"
-                          max="200"
-                          placeholder="Auto-detect BPM"
-                          value={bpmOverride}
-                          onChange={(e) => setBpmOverride(e.target.value)}
-                          className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
-                        />
-                        <p className="text-xs text-zinc-500">
-                          Leave empty to auto-detect BPM, or specify a value for more accurate beat-aligned chord detection
-                        </p>
-                      </div>
-                    </div>
-                    
+
                     <button
                       onClick={handleDetectChords}
                       className="w-full py-3.5 px-4 bg-violet-500 hover:bg-violet-400 text-white font-medium rounded-xl transition-all duration-200 active:scale-[0.98]"
                     >
-                      Detect Chords with Advanced AI
+                      Detect Chords
                     </button>
                   </>
                 )}

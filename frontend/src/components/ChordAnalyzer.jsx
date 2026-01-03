@@ -375,42 +375,6 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
           onCapoChange={setCapo}
         />
 
-        {/* Chord Details Table */}
-        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-zinc-700/50 overflow-hidden">
-          <div className="p-4 border-b border-zinc-700/50">
-            <h3 className="font-semibold text-zinc-200">Chord Timeline</h3>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-800/50">
-                <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">#</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Time</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Chord</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Duration</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Confidence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {processedChords.map((chord, index) => (
-                  <tr 
-                    key={index} 
-                    className={`border-b border-zinc-700/30 last:border-0 hover:bg-zinc-800/30 cursor-pointer transition-colors ${
-                      index === currentChordIndex ? 'bg-red-500/10' : ''
-                    }`}
-                    onClick={() => jumpToChord(index)}
-                  >
-                    <td className="px-4 py-3 text-zinc-500 font-mono">{index + 1}</td>
-                    <td className="px-4 py-3 font-mono text-zinc-400">{chord.time.toFixed(2)}s</td>
-                    <td className="px-4 py-3 font-bold text-zinc-100">{transposeChord(chord.chord, capo)}</td>
-                    <td className="px-4 py-3 text-zinc-400">{chord.duration.toFixed(1)}s</td>
-                    <td className="px-4 py-3 text-zinc-400">{(chord.confidence * 100).toFixed(0)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
       {/* Custom CSS for slider */}
