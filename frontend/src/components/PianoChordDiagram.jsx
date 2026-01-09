@@ -286,8 +286,9 @@ const CHORDS = {
   'Bsus4': ['B', 'E', 'F#'],
 };
 
-const WHITE_KEYS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-const BLACK_KEYS = ['C#', 'D#', '', 'F#', 'G#', 'A#', ''];
+// 2 octaves for better visibility
+const WHITE_KEYS = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const BLACK_KEYS = ['C#', 'D#', '', 'F#', 'G#', 'A#', '', 'C#', 'D#', '', 'F#', 'G#', 'A#', ''];
 
 // Helper function to calculate chord notes dynamically for unknown chords
 const calculateChordNotes = (root, quality) => {
@@ -482,8 +483,19 @@ const PianoChordDiagram = ({ chordName }) => {
   console.log('[PianoChordDiagram] COMPONENT RE-RENDERED');
   console.log('[PianoChordDiagram] 1. RAW INPUT:', JSON.stringify(chordName));
 
+  // Parse slash chords (e.g., "G/B" = G chord with B bass)
+  let bassNote = null;
+  let chordPart = chordName;
+
+  if (chordName && chordName.includes('/')) {
+    const [chord, bass] = chordName.split('/');
+    chordPart = chord.trim();
+    bassNote = bass.trim();
+    console.log('[PianoChordDiagram] SLASH CHORD DETECTED - Chord:', chordPart, 'Bass:', bassNote);
+  }
+
   // Normalize the chord name to handle different detection system formats
-  const normalizedChordName = normalizeChordName(chordName);
+  const normalizedChordName = normalizeChordName(chordPart);
   console.log('[PianoChordDiagram] 2. NORMALIZED:', JSON.stringify(normalizedChordName));
 
   let notes = CHORDS[normalizedChordName] || [];
@@ -524,60 +536,116 @@ const PianoChordDiagram = ({ chordName }) => {
   console.log('[PianoChordDiagram] 10. FINAL NOTES FOR HIGHLIGHTING:', notes);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
+  // Determine bass note (for left hand)
+  // If slash chord, use specified bass; otherwise use root note (first note of chord)
+  if (!bassNote && notes.length > 0) {
+    bassNote = notes[0]; // Root note is typically the first note
+  }
+
+  console.log('[PianoChordDiagram] 🎹 Bass note (left hand):', bassNote);
+  console.log('[PianoChordDiagram] 🎹 Chord notes (right hand):', notes);
+
   // Format for display
   const displayChordName = formatChordForDisplay(chordName);
   const displayNotes = notes.map(note => note.replace(/A#/g, 'Bb'));
 
+  // Normalize notes for matching (handle enharmonic equivalents)
+  const normalizeNote = (note) => {
+    const enharmonic = {
+      'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'
+    };
+    return enharmonic[note] || note;
+  };
+
+  const normalizedChordNotes = notes.map(normalizeNote);
+  const normalizedBassNote = bassNote ? normalizeNote(bassNote) : null;
+  console.log('[PianoChordDiagram] Normalized chord notes for matching:', normalizedChordNotes);
+  console.log('[PianoChordDiagram] Normalized bass note for matching:', normalizedBassNote);
+
   // Render white keys
   const whiteKeys = WHITE_KEYS.map((key, idx) => {
-    const isActive = notes.includes(key);
+    const normalizedKey = normalizeNote(key);
+    const isLeftOctave = idx < 7; // First 7 keys are left octave (bass)
+    const isRightOctave = idx >= 7; // Last 7 keys are right octave (chord)
+
+    // Left octave: only highlight bass note in RED
+    const isBass = isLeftOctave && normalizedBassNote && normalizedKey === normalizedBassNote;
+    // Right octave: highlight all chord notes in BLUE
+    const isChord = isRightOctave && normalizedChordNotes.includes(normalizedKey);
+
+    const isActive = isBass || isChord;
+
     if (isActive) {
-      console.log(`[PianoChordDiagram] White key "${key}" is ACTIVE - applying bg-blue-400`);
+      console.log(`[PianoChordDiagram] White key "${key}" at index ${idx} is ACTIVE - ${isBass ? 'BASS (red)' : 'CHORD (blue)'}`);
     }
+
     return (
       <div
-        key={key}
-        className={`w-8 h-20 border border-zinc-400 flex items-end justify-center pb-2 text-xs font-medium transition-all duration-200 ${
-          isActive
-            ? 'bg-blue-400 text-white shadow-lg'
-            : 'bg-white hover:bg-zinc-100 text-zinc-600'
+        key={`white-${idx}`}
+        className={`w-8 h-20 border flex items-end justify-center pb-2 text-xs font-medium transition-all duration-200 ${
+          isBass
+            ? 'bg-red-500 text-white shadow-lg border-red-400'
+            : isChord
+            ? 'bg-blue-500 text-white shadow-lg border-blue-400'
+            : 'bg-white hover:bg-zinc-100 text-zinc-600 border-zinc-400'
         }`}
         style={{
           borderRadius: '0 0 4px 4px',
         }}
       >
         {/* Show note name only on active keys */}
-        {isActive && <span>{key}</span>}
+        {isActive && <span className="font-bold">{key}</span>}
       </div>
     );
   });
 
   // Render black keys (skip empty slots)
   const blackKeys = BLACK_KEYS.map((key, idx) => {
-    if (!key) return <div key={idx} className="w-6" />; // spacer
+    if (!key) return <div key={`spacer-${idx}`} className="w-6" />; // spacer
 
-    const isActive = notes.includes(key);
+    const normalizedKey = normalizeNote(key);
+    const isLeftOctave = idx < 7; // First 7 positions are left octave (bass)
+    const isRightOctave = idx >= 7; // Last 7 positions are right octave (chord)
+
+    // Left octave: only highlight bass note in RED
+    const isBass = isLeftOctave && normalizedBassNote && normalizedKey === normalizedBassNote;
+    // Right octave: highlight all chord notes in BLUE
+    const isChord = isRightOctave && normalizedChordNotes.includes(normalizedKey);
+
+    const isActive = isBass || isChord;
+
     if (isActive) {
-      console.log(`[PianoChordDiagram] Black key "${key}" is ACTIVE - applying bg-blue-600`);
+      console.log(`[PianoChordDiagram] Black key "${key}" at index ${idx} is ACTIVE - ${isBass ? 'BASS (red)' : 'CHORD (blue)'}`);
     }
+
+    // Calculate proper spacing for black keys
+    const getMarginLeft = () => {
+      const posInOctave = idx % 7;
+      if (posInOctave === 0) return '1.25rem'; // After C
+      if (posInOctave === 2) return '1.25rem'; // After E (gap before F)
+      return '0.5rem';
+    };
+
     return (
       <div
-        key={key}
+        key={`black-${idx}`}
         className={`w-6 h-12 flex items-end justify-center pb-1 text-xs font-medium transition-all duration-200 ${
-          isActive
+          isBass
+            ? 'bg-red-600 text-white shadow-lg'
+            : isChord
             ? 'bg-blue-600 text-white shadow-lg'
             : 'bg-zinc-800 hover:bg-zinc-700 text-white'
         }`}
         style={{
           borderRadius: '0 0 2px 2px',
-          marginLeft: idx === 0 ? '1.25rem' : (idx === 2 ? '1.25rem' : '0.5rem'),
+          marginLeft: getMarginLeft(),
           marginRight: '0.5rem',
           position: 'relative',
           zIndex: 10,
         }}
       >
         {/* Show note name only on active keys */}
-        {isActive && <span>{key.replace('#', '♯')}</span>}
+        {isActive && <span className="font-bold">{key.replace('#', '♯')}</span>}
       </div>
     );
   });
@@ -597,9 +665,19 @@ const PianoChordDiagram = ({ chordName }) => {
       </div>
       
       {notes.length > 0 ? (
-        <div className="chord-info mt-4 text-center">
-          <div className="text-lg font-bold text-zinc-100 mb-1">{displayChordName}</div>
-          <div className="text-sm text-zinc-400">{displayNotes.join(' • ')}</div>
+        <div className="chord-info mt-4 text-center space-y-2">
+          <div className="text-lg font-bold text-zinc-100">{displayChordName}</div>
+          <div className="flex items-center justify-center gap-4 text-xs">
+            <div className="flex items-center gap-1">
+              <span className="text-red-400 font-semibold">Bass:</span>
+              <span className="text-red-300">{bassNote ? bassNote.replace(/A#/g, 'Bb') : '—'}</span>
+            </div>
+            <div className="text-zinc-600">|</div>
+            <div className="flex items-center gap-1">
+              <span className="text-blue-400 font-semibold">Chord:</span>
+              <span className="text-blue-300">{displayNotes.join(' • ')}</span>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="chord-info mt-4 text-center">

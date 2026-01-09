@@ -248,141 +248,98 @@ const ChordProgressionBar = ({
   console.log('[ChordProgressionBar] Current chord name:', JSON.stringify(currentChordName));
   console.log('[ChordProgressionBar] Passing to PianoChordDiagram:', JSON.stringify(currentChordName));
 
-  // Get display chords for sequence (previous, current, next)
+  // Get display chords for sequence (3 before, current, 3 after = 7 total)
   const displayChords = [];
-  const startIndex = Math.max(0, currentChordIndex - 1);
-  const endIndex = Math.min(chordProgression.length, startIndex + 3); // Show exactly 3 chords
+  const startIndex = Math.max(0, currentChordIndex - 3);
+  const endIndex = Math.min(chordProgression.length, startIndex + 7); // Show exactly 7 chords
 
   for (let i = startIndex; i < endIndex; i++) {
     displayChords.push(chordProgression[i]);
   }
 
   return (
-    <div className="chord-progression-bar">
-      {/* Main container */}
-      <div className="chord-progression-container flex gap-8">
-        
-        {/* Center Column - Clean Chord Progression */}
-        <div className="chord-progression-section flex-1">
-          {chordProgression.length > 0 ? (
-            <div className="flex flex-col gap-5 p-5">
-              {/* Header */}
-              <div className="text-center border-b-2 border-zinc-700/50 pb-4">
-                <h3 className="text-2xl font-semibold text-zinc-100 mb-3">
-                  Chord Progression
-                </h3>
-                <div className="inline-flex items-center gap-2 bg-zinc-800/50 px-4 py-2 rounded-full border border-zinc-700/50">
-                  <span className="text-lg font-bold text-zinc-100">
-                    {estimatedBPM}
-                  </span>
-                  <span className="text-sm text-zinc-400">BPM</span>
-                </div>
+    <div className="chord-progression-bar h-full">
+      {chordProgression.length > 0 ? (
+        <div className="flex flex-col h-full">
+          {/* Centered Chord Timeline - Prominent Display */}
+          <div className="flex-1 flex flex-col items-center justify-center py-8 px-6">
+            {/* BPM Display - Centered Above */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-2 bg-zinc-800/60 px-5 py-2.5 rounded-xl border border-zinc-700/50 shadow-lg">
+                <span className="text-2xl font-bold text-zinc-100">{estimatedBPM}</span>
+                <span className="text-sm text-zinc-400 font-medium">BPM</span>
               </div>
+            </div>
 
-              {/* Chord Display */}
-              <div
-                ref={scrollContainerRef}
-                className="flex justify-center items-center gap-5 overflow-x-auto pb-4 min-h-36"
-                style={{ scrollbarWidth: 'thin' }}
-              >
-                {displayChords.map((chordInfo, index) => {
-                  const actualIndex = startIndex + index;
-                  const isPrevious = actualIndex < currentChordIndex;
-                  const isCurrent = actualIndex === currentChordIndex;
-                  const isNext = actualIndex > currentChordIndex;
-                  
-                  // Styling based on state
-                  let cardClasses = "flex-shrink-0 p-5 rounded-2xl border-2 min-w-24 max-w-36 text-center transition-all duration-300 cursor-pointer";
-                  
-                  if (isCurrent) {
-                    cardClasses += " bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-400 transform scale-110 shadow-lg shadow-blue-500/25 z-10";
-                  } else if (isPrevious) {
-                    cardClasses += " bg-zinc-800/30 text-zinc-500 border-zinc-700/50 opacity-70 transform scale-95";
-                  } else if (isNext) {
-                    cardClasses += " bg-blue-500/10 text-blue-400 border-blue-500/30";
-                  } else {
-                    cardClasses += " bg-zinc-800/50 text-zinc-300 border-zinc-700/50 hover:bg-zinc-700/50";
-                  }
+            {/* Chord Cards - Centered and Prominent */}
+            <div
+              ref={scrollContainerRef}
+              className="flex items-center justify-center gap-6 overflow-x-auto px-8 py-4"
+              style={{ scrollbarWidth: 'thin', maxWidth: '100%' }}
+            >
+              {displayChords.map((chordInfo, index) => {
+                const actualIndex = startIndex + index;
+                const isPrevious = actualIndex < currentChordIndex;
+                const isCurrent = actualIndex === currentChordIndex;
+                const isNext = actualIndex > currentChordIndex;
 
-                  return (
-                    <div key={actualIndex} className={cardClasses}>
-                      {/* Chord Name */}
-                      <div className={`font-bold font-mono mb-2 ${isCurrent ? 'text-2xl' : 'text-xl'}`}>
-                        {formatChordForDisplay(chordInfo.chord)}
-                      </div>
+                // Enhanced styling with more prominence
+                let cardClasses = "flex-shrink-0 rounded-2xl border-2 text-center transition-all duration-300 cursor-pointer";
 
-                      {/* Beat Info */}
-                      {isCurrent ? (
-                        <div className="text-xs opacity-90">
-                          <div className="mb-1">
-                            Beat {getCurrentBeatInfo(chordInfo).currentBeat} of {chordInfo.beats}
-                          </div>
-                          <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-white/80 rounded-full transition-all duration-100"
-                              style={{ width: `${getCurrentBeatInfo(chordInfo).beatProgress * 100}%` }}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-xs opacity-80 font-medium">
-                          {chordInfo.beats} beats
-                        </div>
-                      )}
+                if (isCurrent) {
+                  cardClasses += " bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-400 transform scale-125 shadow-2xl shadow-blue-500/50 z-10 px-8 py-6 min-w-32";
+                } else if (isPrevious) {
+                  cardClasses += " bg-zinc-800/40 text-zinc-500 border-zinc-700/50 opacity-50 transform scale-90 px-5 py-4 min-w-24";
+                } else if (isNext) {
+                  cardClasses += " bg-blue-500/10 text-blue-300 border-blue-500/40 hover:bg-blue-500/20 transform scale-100 px-5 py-4 min-w-24";
+                } else {
+                  cardClasses += " bg-zinc-800/50 text-zinc-300 border-zinc-700/50 hover:bg-zinc-700/50 px-5 py-4 min-w-24";
+                }
+
+                return (
+                  <div key={actualIndex} className={cardClasses}>
+                    {/* Chord Name - Larger for current */}
+                    <div className={`font-bold font-mono mb-2 ${isCurrent ? 'text-3xl' : 'text-xl'}`}>
+                      {formatChordForDisplay(chordInfo.chord)}
                     </div>
-                  );
-                })}
-              </div>
-              
-              {/* Analysis Button */}
-              {onAnalyze && (
-                <div className="text-center">
-                  <button
-                    onClick={onAnalyze}
-                    disabled={isAnalyzing || !selectedFile}
-                    className="px-6 py-3 bg-violet-500 hover:bg-violet-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all duration-200"
-                  >
-                    {isAnalyzing ? 'Analyzing...' : 'Analyze Chords'}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="p-16 text-center">
-              <h3 className="text-2xl font-semibold text-zinc-100 mb-3">
-                Ready to Analyze
-              </h3>
-              <p className="text-zinc-400 mb-6">
-                Upload an audio file and click "Analyze Chords" to detect chord progressions
-              </p>
-              {onAnalyze && (
-                <button
-                  onClick={onAnalyze}
-                  disabled={isAnalyzing || !selectedFile}
-                  className="px-6 py-3 bg-violet-500 hover:bg-violet-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all duration-200"
-                >
-                  {isAnalyzing ? 'Analyzing...' : 'Analyze Chords'}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
 
-        {/* Right Column - Current Chord with Piano */}
-        <div className="current-chord-section w-80 flex-shrink-0">
-          <h4 className="text-lg font-semibold text-zinc-200 mb-4">Now Playing</h4>
-          
-          {/* Current Chord Display */}
-          {currentChordName && currentChordName !== 'N/C' && currentChordName !== '—' && currentChordName !== 'N' ? (
-            <PianoChordDiagram chordName={currentChordName} />
-          ) : (
-            <div className="flex flex-col items-center bg-zinc-900/50 backdrop-blur-sm rounded-xl p-8 border border-zinc-700/50">
-              <div className="text-4xl font-bold text-zinc-500 mb-2">—</div>
-              <div className="text-sm text-zinc-500">No chord detected</div>
+                    {/* Beat Info */}
+                    {isCurrent ? (
+                      <div className="text-sm opacity-90">
+                        <div className="mb-2 font-semibold">
+                          {getCurrentBeatInfo(chordInfo).currentBeat}/{chordInfo.beats}
+                        </div>
+                        <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-white/90 rounded-full transition-all duration-100"
+                            style={{ width: `${getCurrentBeatInfo(chordInfo).beatProgress * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm opacity-70 font-medium">
+                        {chordInfo.beats}b
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          )}
+
+            {/* Subtle Label Below */}
+            <div className="mt-6 text-xs text-zinc-500 font-medium tracking-wider uppercase">
+              Chord Timeline
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="p-8 text-center h-full flex flex-col items-center justify-center">
+          <div className="text-zinc-600 mb-2 text-4xl">♪</div>
+          <p className="text-sm text-zinc-500">
+            Chord progression will appear here
+          </p>
+        </div>
+      )}
     </div>
   );
 };
