@@ -39,11 +39,36 @@ const api = {
     const formData = new FormData();
     formData.append('song', song);
     formData.append('artist', artist);
-    
+
     const headers = {};
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
-    
+
     const res = await fetch('/api/lyrics', { method: 'POST', body: formData, headers });
+    return res.json();
+  },
+
+  async searchYouTube(query, authToken = null) {
+    const formData = new FormData();
+    formData.append('query', query);
+    formData.append('max_results', '10');
+
+    const headers = {};
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
+    const res = await fetch('/api/youtube/search', { method: 'POST', body: formData, headers });
+    return res.json();
+  },
+
+  async analyzeYouTube(videoId, analysisType, authToken = null, simplicityPreference = 0.5) {
+    const formData = new FormData();
+    formData.append('video_id', videoId);
+    formData.append('analysis_type', analysisType);
+    formData.append('simplicity_preference', simplicityPreference);
+
+    const headers = {};
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
+    const res = await fetch('/api/youtube/analyze', { method: 'POST', body: formData, headers });
     return res.json();
   }
 };
@@ -264,6 +289,13 @@ export default function App() {
     }
   }, []);
 
+  // YouTube state
+  const [youtubeQuery, setYoutubeQuery] = useState('');
+  const [youtubeResults, setYoutubeResults] = useState([]);
+  const [youtubeSearching, setYoutubeSearching] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [youtubeAnalysisType, setYoutubeAnalysisType] = useState('chords');
+
   const navItems = [
     { id: 'separator', icon: Activity, label: 'Separator' },
     { id: 'chords', icon: Music, label: 'Chords' },
@@ -279,6 +311,62 @@ export default function App() {
     setLyrics(null);
     setError(null);
     setShowChordAnalyzer(false);
+    setYoutubeResults([]);
+    setSelectedVideo(null);
+  };
+
+  const handleYouTubeSearch = async () => {
+    if (!youtubeQuery.trim()) return;
+
+    setYoutubeSearching(true);
+    setError(null);
+
+    try {
+      const result = await api.searchYouTube(youtubeQuery, authToken);
+
+      if (result.success) {
+        setYoutubeResults(result.results);
+      } else {
+        setError(result.error || 'Search failed');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setYoutubeSearching(false);
+    }
+  };
+
+  const handleYouTubeVideoSelect = async (video) => {
+    setSelectedVideo(video);
+    setProcessing(true);
+    setError(null);
+
+    try {
+      const res = await api.analyzeYouTube(
+        video.id,
+        youtubeAnalysisType,
+        authToken,
+        simplicityPreference
+      );
+
+      if (!res.success) {
+        setError(res.error || 'Failed to analyze video');
+        setProcessing(false);
+        return;
+      }
+
+      if (youtubeAnalysisType === 'chords') {
+        setChords(res.chords || []);
+        setDetectedBpm(res.bpm || 120);
+        setFile({ name: `${video.title}.mp3`, youtubeVideoId: video.id });
+        setShowChordAnalyzer(true);
+      }
+
+      setProcessing(false);
+    } catch (e) {
+      setError(e.message);
+      setProcessing(false);
+    }
   };
 
   const handleAuthSuccess = (userData, token) => {
@@ -449,13 +537,14 @@ export default function App() {
             audioFile={file}
             chordData={chords}
             detectedBPM={detectedBpm}
+            youtubeVideoId={file?.youtubeVideoId}
             onBack={() => {
               setShowChordAnalyzer(false);
             }}
           />
         ) : (
           <div className="flex-1 overflow-auto">
-            <div className="max-w-2xl mx-auto p-8">
+            <div className={`${activeNav === 'chords' ? 'max-w-7xl' : 'max-w-2xl'} mx-auto p-8`}>
               <p className="text-zinc-400 mb-8">{getDescription()}</p>
 
             {error && (
@@ -524,11 +613,94 @@ export default function App() {
             {activeNav === 'chords' && (
               <div className="space-y-6">
                 {!file && !chords && (
-                  <UploadZone
-                    onFileSelect={setFile}
-                    isDragging={isDragging}
-                    setIsDragging={setIsDragging}
-                  />
+                  <>
+                    {/* YouTube Search */}
+                    <div className="space-y-4 p-6 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+                      <h3 className="text-lg font-semibold text-zinc-200">YouTube Search</h3>
+                      <div className="flex gap-3">
+                        <input
+                          type="text"
+                          placeholder="Search YouTube (e.g., 'Let it be guitar tutorial')"
+                          value={youtubeQuery}
+                          onChange={(e) => setYoutubeQuery(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleYouTubeSearch()}
+                          className="flex-1 px-4 py-3 bg-zinc-900/50 border border-zinc-700 rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
+                        />
+                        <button
+                          onClick={handleYouTubeSearch}
+                          disabled={!youtubeQuery.trim() || youtubeSearching}
+                          className="px-6 py-3 bg-violet-500 hover:bg-violet-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all duration-200"
+                        >
+                          {youtubeSearching ? 'Searching...' : 'Search'}
+                        </button>
+                      </div>
+
+                      {/* Selected Video Indicator - Fixed at top */}
+                      {selectedVideo && (
+                        <div className="mb-4 p-3 bg-violet-500/10 border border-violet-500/30 rounded-lg flex items-center justify-between animate-fadeIn">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center text-white">
+                              <Check size={16} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-violet-200">Selected for analysis</p>
+                              <p className="text-xs text-violet-400/70 line-clamp-1">{selectedVideo.title}</p>
+                            </div>
+                          </div>
+                          {!processing && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedVideo(null);
+                              }}
+                              className="text-violet-400 hover:text-violet-300 transition-colors"
+                            >
+                              <X size={18} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Video Results */}
+                      {youtubeResults.length > 0 && (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-4 gap-3 max-h-[520px] overflow-y-auto mt-4 pr-2">
+                            {youtubeResults.map((video) => (
+                              <div
+                                key={video.id}
+                                onClick={() => handleYouTubeVideoSelect(video)}
+                                className={`cursor-pointer rounded-lg border-2 transition-all duration-200 hover:scale-[1.02] ${
+                                  selectedVideo?.id === video.id
+                                    ? 'border-violet-500 bg-violet-500/10 ring-2 ring-violet-500/20'
+                                    : 'border-zinc-700/50 bg-zinc-900/30 hover:border-zinc-600'
+                                }`}
+                              >
+                                <div className="aspect-video bg-zinc-900 rounded-t-lg overflow-hidden relative">
+                                  <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                                  {selectedVideo?.id === video.id && (
+                                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center shadow-lg">
+                                      <Check size={14} className="text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2">
+                                  <h4 className="font-medium text-xs text-zinc-200 line-clamp-2 leading-tight">{video.title}</h4>
+                                  <p className="text-[10px] text-zinc-500 mt-1 line-clamp-1">{video.channel}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Scrollable results indicator */}
+                          {youtubeResults.length > 12 && (
+                            <div className="text-center text-xs text-zinc-500">
+                              Scroll to see {youtubeResults.length - 12} more results
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
 
                 {file && !processing && !chords && (

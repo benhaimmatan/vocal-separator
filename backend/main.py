@@ -10,10 +10,18 @@ import asyncio
 from typing import Optional
 import uuid
 
-from .processor import AudioProcessor
-from .chord_detector_advanced import AdvancedChordDetector
-from .lyrics_utils import get_lyrics_for_song, clean_lyrics
-from .supabase_client import get_supabase_client, SupabaseClient, init_database_schema
+try:
+    from .processor import AudioProcessor
+    from .chord_detector_advanced import AdvancedChordDetector
+    from .lyrics_utils import get_lyrics_for_song, clean_lyrics
+    from .supabase_client import get_supabase_client, SupabaseClient, init_database_schema
+    from .youtube_utils import search_youtube, download_youtube_audio, cleanup_temp_directory
+except ImportError:
+    from processor import AudioProcessor
+    from chord_detector_advanced import AdvancedChordDetector
+    from lyrics_utils import get_lyrics_for_song, clean_lyrics
+    from supabase_client import get_supabase_client, SupabaseClient, init_database_schema
+    from youtube_utils import search_youtube, download_youtube_audio, cleanup_temp_directory
 
 # Import Modal client for GPU processing
 try:
@@ -503,11 +511,176 @@ async def fetch_lyrics(song: str = Form(...), artist: str = Form(...), user = De
             if job_id:
                 supabase_client.update_job_status(job_id, "failed", error_message="Lyrics not found")
             return {"success": False, "message": "Lyrics not found"}
-            
+
     except Exception as e:
         logger.error(f"Error: {e}")
-        
+
         if job_id:
             supabase_client.update_job_status(job_id, "failed", error_message=str(e))
-        
+
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/youtube/search")
+async def youtube_search_endpoint(
+    query: str = Form(...),
+    max_results: int = Form(10),
+    user = Depends(get_current_user)
+):
+    """
+    Search YouTube videos
+
+    Parameters:
+    - query: Search query string
+    - max_results: Number of results to return (default 10, max 50)
+
+    Returns:
+    - success: bool
+    - results: list of video objects with id, title, thumbnail, etc.
+    - error: string (if failed)
+    """
+    try:
+        # Limit max_results
+        max_results = min(max_results, 50)
+
+        # Search YouTube
+        result = search_youtube(query, max_results)
+
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=result.get("error", "Search failed"))
+
+        return {
+            "success": True,
+            "results": result["results"],
+            "query": query
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"YouTube search error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/youtube/analyze")
+async def youtube_analyze_endpoint(
+    video_id: str = Form(...),
+    analysis_type: str = Form("chords"),  # "chords" or "separate"
+    simplicity_preference: float = Form(0.5),
+    user = Depends(get_current_user)
+):
+    """
+    Download YouTube video and run analysis
+
+    Parameters:
+    - video_id: YouTube video ID
+    - analysis_type: "chords" or "separate"
+    - simplicity_preference: For chord detection (0-1)
+
+    Returns:
+    - success: bool
+    - job_id: string (if Supabase enabled)
+    - analysis results based on type
+    """
+    job_id = None
+    temp_dir = None
+
+    try:
+        # Create job record
+        if SUPABASE_ENABLED and user:
+            job_result = supabase_client.create_processing_job(
+                user_id=user.get("id"),
+                job_type=f"youtube_{analysis_type}",
+                filename=f"youtube_{video_id}",
+                file_size=None,
+                metadata={"video_id": video_id, "analysis_type": analysis_type}
+            )
+            if job_result["success"]:
+                job_id = job_result["job"]["id"]
+
+        # Update job status
+        if job_id:
+            supabase_client.update_job_status(job_id, "processing")
+
+        # Download audio
+        logger.info(f"Downloading audio from YouTube video: {video_id}")
+        download_result = download_youtube_audio(video_id)
+
+        if not download_result["success"]:
+            raise ValueError(download_result.get("error", "Download failed"))
+
+        audio_path = download_result["audio_path"]
+        temp_dir = download_result["temp_dir"]
+        video_title = download_result.get("title", "YouTube Video")
+
+        # Run analysis based on type
+        if analysis_type == "chords":
+            # Chord detection
+            result = chord_detector.detect_chords_advanced(
+                audio_path,
+                simplicity_preference=simplicity_preference,
+                bpm_override=None
+            )
+
+            # Format response
+            formatted_chords = [
+                {"time": c["time"], "chord": c["chord"], "confidence": c.get("confidence", 1.0)}
+                for c in result["chords"]
+            ]
+
+            response_data = {
+                "success": True,
+                "job_id": job_id,
+                "chords": formatted_chords,
+                "bpm": result.get("bpm", 120),
+                "video_title": video_title,
+                "video_id": video_id,
+                "audio_path": audio_path  # Return audio path for frontend playback
+            }
+
+        elif analysis_type == "separate":
+            # Vocal separation
+            result = await audio_processor.process_audio(
+                audio_path,
+                extract_vocals=True,
+                extract_accompaniment=True
+            )
+
+            response_data = {
+                "success": True,
+                "job_id": job_id,
+                "vocals_path": result.get("vocals_path"),
+                "accompaniment_path": result.get("accompaniment_path"),
+                "video_title": video_title,
+                "video_id": video_id
+            }
+        else:
+            raise ValueError(f"Invalid analysis type: {analysis_type}")
+
+        # Update job with results
+        if job_id:
+            supabase_client.update_job_status(
+                job_id,
+                "completed",
+                output_files=response_data
+            )
+
+        return response_data
+
+    except ValueError as e:
+        # User-friendly errors (invalid video, geo-blocked, etc.)
+        if job_id:
+            supabase_client.update_job_status(job_id, "failed", error_message=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception as e:
+        logger.error(f"YouTube analyze error: {e}")
+        if job_id:
+            supabase_client.update_job_status(job_id, "failed", error_message=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        # Cleanup temp directory only for vocal separation
+        # For chord analysis, keep the audio file so frontend can play it
+        if temp_dir and analysis_type != "chords":
+            cleanup_temp_directory(temp_dir)
