@@ -162,8 +162,24 @@ def download_youtube_audio(video_id: str, output_dir: str = None) -> dict:
     except DownloadError as e:
         error_msg = str(e).lower()
 
+        # Network/DNS errors (HuggingFace Spaces limitation)
+        if 'no address associated with hostname' in error_msg or 'errno -5' in error_msg:
+            return {
+                "success": False,
+                "error": "YouTube download is blocked by network restrictions. HuggingFace Spaces may block direct YouTube access. Please upload your audio file directly instead.",
+                "error_type": "network_blocked"
+            }
+
+        # Connection/timeout errors
+        elif 'connection' in error_msg or 'timeout' in error_msg or 'timed out' in error_msg:
+            return {
+                "success": False,
+                "error": "Network connection failed. Please try again or upload your audio file directly.",
+                "error_type": "network_error"
+            }
+
         # DRM-protected
-        if 'drm' in error_msg or 'format is not available' in error_msg or 'signature extraction failed' in error_msg:
+        elif 'drm' in error_msg or 'format is not available' in error_msg or 'signature extraction failed' in error_msg:
             return {
                 "success": False,
                 "error": "This video is DRM-protected and cannot be downloaded. Try searching for:\n• User-uploaded covers\n• Guitar tutorials\n• Karaoke versions\n• Live performances\n\nOfficial music videos are typically protected.",

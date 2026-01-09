@@ -26,9 +26,11 @@ A modern audio processing tool for separating vocals, detecting chords, and fetc
 - **Backend**: FastAPI + Python
 - **Audio Processing**: Demucs, Librosa, Essentia
 
-## Configuration (Required for YouTube Features)
+## Configuration (YouTube Features)
 
-To enable YouTube search and video analysis, you need to set up a YouTube API key:
+### YouTube Search (Requires API Key)
+
+To enable YouTube search, you need to set up a YouTube API key:
 
 1. Get your API key from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Enable the YouTube Data API v3 for your project
@@ -37,7 +39,14 @@ To enable YouTube search and video analysis, you need to set up a YouTube API ke
    YOUTUBE_API_KEY=your_api_key_here
    ```
 
-**Note**: The app will work without the YouTube API key, but YouTube search functionality will be disabled.
+### ⚠️ YouTube Download Limitations
+
+**Important**: HuggingFace Spaces may have network restrictions that block direct YouTube downloads (DNS resolution errors). If you encounter errors when analyzing YouTube videos:
+
+- **Workaround**: Upload your audio file directly using the file upload feature
+- **Alternative**: Use the app locally where YouTube downloads work without restrictions
+
+The YouTube search functionality works fine, but video download/analysis may fail due to platform networking policies.
 
 
 # Updated Jan 3 2026: YouTube Integration - Search and analyze YouTube videos directly (v2.3)
