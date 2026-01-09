@@ -132,11 +132,63 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
 
 @app.get("/api/health")
 async def health_check():
+    # Check yt-dlp availability
+    yt_dlp_available = False
+    yt_dlp_version = None
+    try:
+        import yt_dlp
+        yt_dlp_available = True
+        yt_dlp_version = yt_dlp.version.__version__
+    except Exception as e:
+        logger.warning(f"yt-dlp not available: {e}")
+
+    # Check youtube_api availability
+    youtube_api_available = False
+    try:
+        from youtube_utils import youtube_api
+        youtube_api_available = youtube_api is not None
+    except Exception as e:
+        logger.warning(f"youtube_api check failed: {e}")
+
     return {
         "status": "healthy",
         "modal_enabled": MODAL_ENABLED,
-        "supabase_enabled": SUPABASE_ENABLED
+        "supabase_enabled": SUPABASE_ENABLED,
+        "yt_dlp_available": yt_dlp_available,
+        "yt_dlp_version": yt_dlp_version,
+        "youtube_api_configured": youtube_api_available
     }
+
+@app.get("/api/youtube/test")
+async def test_youtube_download():
+    """Test YouTube download functionality with a known working video"""
+    try:
+        # Use a short Creative Commons test video
+        test_video_id = "jNQXAC9IVRw"  # "Me at the zoo" - first YouTube video
+
+        logger.info(f"Testing YouTube download with video: {test_video_id}")
+        result = download_youtube_audio(test_video_id)
+
+        # Clean up downloaded file
+        if result.get("success") and result.get("temp_dir"):
+            cleanup_temp_directory(result.get("temp_dir"))
+
+        return {
+            "success": result.get("success", False),
+            "message": "YouTube download test completed",
+            "test_video_id": test_video_id,
+            "error": result.get("error") if not result.get("success") else None,
+            "title": result.get("title") if result.get("success") else None
+        }
+    except Exception as e:
+        logger.error(f"YouTube test error: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return {
+            "success": False,
+            "message": "YouTube download test failed",
+            "error": str(e)
+        }
 
 @app.post("/api/auth/register")
 async def register(email: str = Form(...), password: str = Form(...), display_name: str = Form(None)):
