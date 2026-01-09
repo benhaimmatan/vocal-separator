@@ -22,3 +22,5 @@ modal>=0.65.0
 mir_eval==0.7
 sortedcontainers==2.4.0
 pyyaml==6.0.1
+google-api-python-client>=2.100.0
+yt-dlp>=2024.12.0
