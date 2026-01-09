@@ -1,5 +1,6 @@
-# FastAPI + React deployment for HuggingFace Spaces
-# Build v2.3.2 - 2026-01-09 - Fix PYTHONPATH for backend module imports
+# FastAPI + React deployment
+# Compatible with: Railway, Render, Fly.io, Google Cloud Run, HuggingFace Spaces
+# Build v2.3.8 - 2026-01-09 - Multi-platform deployment support
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
@@ -48,6 +49,11 @@ cd /app && PYTHONPATH=/app:/app/backend python -m uvicorn backend.main:app --hos
 RUN chmod +x /app/start.sh
 
 # Expose port 7860 (HuggingFace default)
+# Railway/Render will auto-detect from nginx config
 EXPOSE 7860
+
+# Health check for Railway/platforms that support it
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:7860/api/health || exit 1
 
 CMD ["/app/start.sh"]

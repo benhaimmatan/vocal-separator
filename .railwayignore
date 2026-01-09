@@ -1,0 +1,49 @@
+# Railway ignore file - excludes unnecessary files from deployment
+
+# Documentation and reports
+*.md
+!README.md
+!RAILWAY_DEPLOYMENT.md
+CHORD_DETECTION_DIAGNOSIS.md
+DEPLOYMENT_INVESTIGATION.md
+FINAL_DIAGNOSIS_AND_FIXES.md
+FIXES_APPLIED.md
+PIANO_CHORD_DEBUG_REPORT.md
+PIANO_CHORD_FIX_SUMMARY.md
+TEST_PIANO_VISUALIZATION.md
+
+# Development files
+.DS_Store
+.env
+.env.local
+*.log
+
+# Claude Code project files
+.claude/
+
+# Git
+.git/
+.gitignore
+
+# Playwright testing
+.playwright-mcp/
+
+# Test files
+backend/test/
+backend/test*.py
+frontend/test-*.html
+frontend/.dockerignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Node modules (will be rebuilt)
+node_modules/
+frontend/node_modules/
+
+# Build artifacts (will be rebuilt)
+frontend/dist/
