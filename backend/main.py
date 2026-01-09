@@ -547,7 +547,9 @@ async def youtube_search_endpoint(
         result = search_youtube(query, max_results)
 
         if not result["success"]:
-            raise HTTPException(status_code=400, detail=result.get("error", "Search failed"))
+            error_msg = result.get("error", "Search failed")
+            logger.error(f"YouTube search failed: {error_msg}")
+            raise HTTPException(status_code=400, detail=error_msg)
 
         return {
             "success": True,
@@ -559,6 +561,8 @@ async def youtube_search_endpoint(
         raise
     except Exception as e:
         logger.error(f"YouTube search error: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -669,15 +673,20 @@ async def youtube_analyze_endpoint(
 
     except ValueError as e:
         # User-friendly errors (invalid video, geo-blocked, etc.)
+        error_detail = str(e)
+        logger.error(f"YouTube analyze ValueError: {error_detail}")
         if job_id:
-            supabase_client.update_job_status(job_id, "failed", error_message=str(e))
-        raise HTTPException(status_code=400, detail=str(e))
+            supabase_client.update_job_status(job_id, "failed", error_message=error_detail)
+        raise HTTPException(status_code=400, detail=error_detail)
 
     except Exception as e:
-        logger.error(f"YouTube analyze error: {e}")
+        error_detail = str(e)
+        logger.error(f"YouTube analyze Exception: {error_detail}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         if job_id:
-            supabase_client.update_job_status(job_id, "failed", error_message=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+            supabase_client.update_job_status(job_id, "failed", error_message=error_detail)
+        raise HTTPException(status_code=500, detail=error_detail)
 
     finally:
         # Cleanup temp directory only for vocal separation
