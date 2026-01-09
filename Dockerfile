@@ -1,6 +1,6 @@
-# FastAPI + React deployment
+# FastAPI + React deployment - Optimized for Railway
 # Compatible with: Railway, Render, Fly.io, Google Cloud Run, HuggingFace Spaces
-# Build v2.3.8 - 2026-01-09 - Multi-platform deployment support
+# Build v2.3.9 - 2026-01-09 - Optimized image size (target: <4GB)
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
@@ -11,24 +11,35 @@ RUN npm cache clean --force && npm install
 
 COPY frontend/ ./
 # Force fresh build without cache (remove any existing dist)
-RUN rm -rf dist && npm run build && echo "Frontend build timestamp: 2026-01-03-YouTube-v2.3" > dist/.build-timestamp
+RUN rm -rf dist && npm run build && echo "Frontend build timestamp: 2026-01-09-Railway-optimized" > dist/.build-timestamp
 
-# Python backend stage
+# Python backend stage - Optimized
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies in one layer and clean up aggressively
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
     nginx \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    gcc \
+    g++ \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/*
 
-# Copy Python requirements and install
+# Copy Python requirements and install with aggressive optimization
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && find /usr/local/lib/python3.10 -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true \
+    && find /usr/local/lib/python3.10 -type d -name "test" -exec rm -rf {} + 2>/dev/null || true \
+    && find /usr/local/lib/python3.10 -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true \
+    && find /usr/local/lib/python3.10 -name "*.pyc" -delete \
+    && find /usr/local/lib/python3.10 -name "*.pyo" -delete \
+    && rm -rf /root/.cache/pip \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Copy backend files and modal functions
 COPY backend/ ./backend/
@@ -47,6 +58,11 @@ nginx &\n\
 cd /app && PYTHONPATH=/app:/app/backend python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
 
 RUN chmod +x /app/start.sh
+
+# Final cleanup to minimize image size
+RUN apt-get remove -y gcc g++ \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
 
 # Expose port 7860 (HuggingFace default)
 # Railway/Render will auto-detect from nginx config

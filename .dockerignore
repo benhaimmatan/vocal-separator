@@ -1,0 +1,82 @@
+# Optimize Docker build - exclude unnecessary files
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+CHORD_DETECTION_DIAGNOSIS.md
+DEPLOYMENT_INVESTIGATION.md
+FINAL_DIAGNOSIS_AND_FIXES.md
+FIXES_APPLIED.md
+PIANO_CHORD_DEBUG_REPORT.md
+PIANO_CHORD_FIX_SUMMARY.md
+TEST_PIANO_VISUALIZATION.md
+
+# Development files
+.DS_Store
+.env
+.env.local
+*.log
+.vscode
+.idea
+
+# Claude Code
+.claude/
+
+# Playwright
+.playwright-mcp/
+
+# Test files
+backend/test/
+backend/test*.py
+frontend/test-*.html
+frontend/.dockerignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+frontend/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts (will be rebuilt)
+frontend/dist/
+
+# Railway
+.railwayignore
+railway.json
+RAILWAY_DEPLOYMENT.md
+
+# Large model files (if any)
+*.pth
+*.ckpt
+*.pt
+*.bin
+models/
+checkpoints/
+
+# Audio samples (if any in repo)
+*.wav
+*.mp3
+*.flac
+*.ogg
+backend/png/
