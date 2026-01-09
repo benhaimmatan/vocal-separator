@@ -56,7 +56,14 @@ const api = {
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
     const res = await fetch('/api/youtube/search', { method: 'POST', body: formData, headers });
-    return res.json();
+    const data = await res.json();
+
+    // Handle FastAPI error responses (400/500) which use "detail" field
+    if (!res.ok) {
+      return { success: false, error: data.detail || data.error || 'Search failed' };
+    }
+
+    return data;
   },
 
   async analyzeYouTube(videoId, analysisType, authToken = null, simplicityPreference = 0.5) {
@@ -69,7 +76,14 @@ const api = {
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
     const res = await fetch('/api/youtube/analyze', { method: 'POST', body: formData, headers });
-    return res.json();
+    const data = await res.json();
+
+    // Handle FastAPI error responses (400/500) which use "detail" field
+    if (!res.ok) {
+      return { success: false, error: data.detail || data.error || 'Request failed' };
+    }
+
+    return data;
   }
 };
 
