@@ -1,5 +1,5 @@
 # FastAPI + React deployment for HuggingFace Spaces
-# Build v2.2 - 2026-01-02 23:30 - UI cleanup: Removed advanced settings and timeline table
+# Build v2.3.2 - 2026-01-09 - Fix PYTHONPATH for backend module imports
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
@@ -10,7 +10,7 @@ RUN npm cache clean --force && npm install
 
 COPY frontend/ ./
 # Force fresh build without cache (remove any existing dist)
-RUN rm -rf dist && npm run build && echo "Frontend build timestamp: 2026-01-02-23:30" > dist/.build-timestamp
+RUN rm -rf dist && npm run build && echo "Frontend build timestamp: 2026-01-03-YouTube-v2.3" > dist/.build-timestamp
 
 # Python backend stage
 FROM python:3.10-slim
@@ -43,7 +43,7 @@ RUN echo '#!/bin/bash\n\
 nginx &\n\
 \n\
 # Start FastAPI server\n\
-cd /app && PYTHONPATH=/app python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
+cd /app && PYTHONPATH=/app:/app/backend python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 
