@@ -19,6 +19,20 @@ from typing import Tuple, List
 
 logger = logging.getLogger(__name__)
 
+# Import Modal client for GPU-based vocal separation
+try:
+    # Try importing from project root
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if os.path.exists(os.path.join(project_root, "modal_functions.py")):
+        sys.path.insert(0, project_root)
+    from modal_functions import ModalClient
+    MODAL_AVAILABLE = True
+    logger.info("Modal client loaded successfully")
+except ImportError as e:
+    logger.warning(f"Modal not available: {e}. Vocal separation will require Modal.")
+    MODAL_AVAILABLE = False
+    ModalClient = None
+
 class AudioProcessor:
     def __init__(self):
         self.base_dir = str(Path.home() / "Downloads" / "Vocals")
@@ -28,7 +42,7 @@ class AudioProcessor:
         self.accompaniment_dir = os.path.join(self.base_dir, "accompaniment")
         self.piano_dir = os.path.join(self.base_dir, "piano")
         self.midi_dir = os.path.join(self.base_dir, "midi")
-        
+
         # Create directories if they don't exist
         for directory in [self.vocals_dir, self.accompaniment_dir, self.piano_dir, self.midi_dir]:
             if not os.path.exists(directory):
@@ -48,161 +62,142 @@ class AudioProcessor:
                 print(f"Error sending progress: {e}")
 
     async def process_audio(self, input_path, output_dir, output_options, progress_callback=None):
+        """
+        Process audio using Modal GPU for vocal separation.
+
+        Args:
+            input_path: Path to input audio file
+            output_dir: Directory to save output files
+            output_options: Dict with keys: vocals, accompaniment, piano
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            Dict with paths to generated files
+        """
         try:
             # Set progress callback if provided
             if progress_callback:
                 self.progress_callback = progress_callback
-            
+
             logger.debug(f"Processing audio:")
             logger.debug(f"Input path: {input_path}")
             logger.debug(f"Output directory: {output_dir}")
             logger.debug(f"Output options: {output_options}")
-            
+
+            # Check Modal availability
+            if not MODAL_AVAILABLE or not ModalClient:
+                raise Exception(
+                    "Modal is required for vocal separation but not available. "
+                    "Please set MODALTOKENID and MODALTOKENSECRET environment variables."
+                )
+
+            # Check Modal credentials
+            modal_token_id = os.getenv("MODALTOKENID")
+            modal_token_secret = os.getenv("MODALTOKENSECRET")
+
+            if not modal_token_id or not modal_token_secret:
+                raise Exception(
+                    "Modal credentials not found. Please set MODALTOKENID and MODALTOKENSECRET "
+                    "environment variables to enable vocal separation."
+                )
+
+            await self._send_progress(10, "Initializing...")
+
             # Create the output paths
             vocals_path = None
             accompaniment_path = None
             piano_path = None
-            
+
             if output_options.get("vocals"):
                 vocals_path = os.path.join(output_dir, f"{Path(input_path).stem}_vocals.mp3")
-            
+
             if output_options.get("accompaniment"):
                 accompaniment_path = os.path.join(output_dir, f"{Path(input_path).stem}_accompaniment.mp3")
-            
+
             if output_options.get("piano"):
                 piano_path = os.path.join(output_dir, f"{Path(input_path).stem}_piano.mp3")
-            
+
             logger.debug(f"Output paths:")
             logger.debug(f"- Vocals: {vocals_path}")
             logger.debug(f"- Accompaniment: {accompaniment_path}")
             logger.debug(f"- Piano: {piano_path}")
-            
-            with tempfile.TemporaryDirectory() as temp_dir:
-                demucs_output_dir = Path(temp_dir) / "output"
-                demucs_output_dir.mkdir(exist_ok=True)
-                logger.debug(f"Created temporary directory: {demucs_output_dir}")
 
-                # Choose model and stems based on what we're extracting
-                if output_options.get("piano"):
-                    # Use 6-stem model for piano extraction
-                    model = 'htdemucs_6s'
-                    cmd = [
-                        'demucs',
-                        '-n', model,
-                        '--mp3',
-                        '--mp3-bitrate', '320',
-                        '--device', 'cpu',
-                        '--segment', '7',
-                        '--overlap', '0.1',
-                        '--jobs', '2',
-                        '--out', str(demucs_output_dir),
-                        str(input_path)
-                    ]
-                else:
-                    # Use 2-stem model for vocals only
-                    model = 'htdemucs'
-                    cmd = [
-                        'demucs',
-                        '--two-stems=vocals',
-                        '-n', model,
-                        '--mp3',
-                        '--mp3-bitrate', '320',
-                        '--device', 'cpu',
-                        '--segment', '7',
-                        '--overlap', '0.1',
-                        '--jobs', '2',
-                        '--out', str(demucs_output_dir),
-                        str(input_path)
-                    ]
+            await self._send_progress(20, "Reading audio file...")
 
-                logger.debug(f"Running command: {' '.join(cmd)}")
-                
-                process = await asyncio.create_subprocess_exec(
-                    *cmd,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
-                )
+            # Read audio file as bytes for Modal
+            with open(input_path, 'rb') as f:
+                audio_data = f.read()
 
-                # Process the output in real-time
-                last_progress = 0
-                while True:
-                    line = await process.stderr.readline()
-                    if not line and process.stderr.at_eof():
-                        break
-                        
-                    line = line.decode().strip()
-                    logger.debug(f"Demucs output: {line}")
+            logger.info(f"Audio file size: {len(audio_data)} bytes")
 
-                    if "progress" in line.lower():
-                        try:
-                            progress = int(re.search(r'(\d+)%', line).group(1))
-                            if progress > last_progress:
-                                await self._send_progress(progress, "Processing audio...")
-                                last_progress = progress
-                        except:
-                            pass
+            await self._send_progress(30, "Sending to Modal GPU for separation...")
 
-                stdout, stderr = await process.communicate()
-                
-                if process.returncode != 0:
-                    logger.error(f"Demucs stderr: {stderr.decode()}")
-                    logger.error(f"Demucs stdout: {stdout.decode()}")
-                    raise Exception(f"Demucs process failed with return code {process.returncode}")
+            # Call Modal GPU function for separation
+            extract_vocals = output_options.get("vocals") or output_options.get("piano")
+            extract_accompaniment = output_options.get("accompaniment")
 
-                # Copy the processed files
-                model_name = 'htdemucs_6s' if output_options.get("piano") else 'htdemucs'
-                demucs_output_path = demucs_output_dir / model_name / Path(input_path).stem
-                logger.debug(f"Demucs output path: {demucs_output_path}")
-                
-                # List contents of output directory
-                logger.debug("Output directory contents:")
-                for item in demucs_output_path.glob("*"):
-                    logger.debug(f"- {item}")
+            logger.info(f"Calling Modal with extract_vocals={extract_vocals}, extract_accompaniment={extract_accompaniment}")
 
-                results = {}
-                
-                if output_options.get("vocals") and vocals_path:
-                    vocals_src = demucs_output_path / "vocals.mp3"
-                    if vocals_src.exists():
-                        shutil.copy2(vocals_src, vocals_path)
-                        results["vocals"] = str(vocals_path)
-                        results["vocals_path"] = str(vocals_path)
-                        logger.debug(f"Copied vocals to: {vocals_path}")
-                        logger.debug(f"Vocals file exists: {Path(vocals_path).exists()}")
-                        logger.debug(f"Vocals file size: {Path(vocals_path).stat().st_size}")
+            # Call Modal in a thread to avoid blocking
+            loop = asyncio.get_event_loop()
+            modal_result = await loop.run_in_executor(
+                None,
+                ModalClient.separate_audio,
+                audio_data,
+                extract_vocals,
+                extract_accompaniment
+            )
 
-                if output_options.get("piano") and piano_path:
-                    piano_src = demucs_output_path / "piano.mp3"
-                    if piano_src.exists():
-                        shutil.copy2(piano_src, piano_path)
-                        results["piano"] = str(piano_path)
-                        results["piano_path"] = str(piano_path)
-                        logger.debug(f"Copied piano to: {piano_path}")
-                        logger.debug(f"Piano file exists: {Path(piano_path).exists()}")
-                        logger.debug(f"Piano file size: {Path(piano_path).stat().st_size}")
+            logger.info(f"Modal result success: {modal_result.get('success')}")
 
-                if output_options.get("accompaniment") and accompaniment_path:
-                    no_vocals_src = demucs_output_path / "no_vocals.mp3"
-                    if no_vocals_src.exists():
-                        shutil.copy2(no_vocals_src, accompaniment_path)
-                        results["accompaniment"] = str(accompaniment_path)
-                        results["accompaniment_path"] = str(accompaniment_path)
-                        logger.debug(f"Copied accompaniment to: {accompaniment_path}")
-                        logger.debug(f"Accompaniment file exists: {Path(accompaniment_path).exists()}")
-                        logger.debug(f"Accompaniment file size: {Path(accompaniment_path).stat().st_size}")
+            if not modal_result.get("success"):
+                error_msg = modal_result.get("error", "Unknown error")
+                raise Exception(f"Modal vocal separation failed: {error_msg}")
 
-                await self._send_progress(100, "Complete!")
-                logger.debug("Processing completed successfully!")
+            await self._send_progress(70, "Processing separated audio...")
 
-                return results
+            results = {}
+
+            # Save vocals if extracted
+            if vocals_path and "vocals_data" in modal_result:
+                with open(vocals_path, 'wb') as f:
+                    f.write(modal_result["vocals_data"])
+                results["vocals"] = str(vocals_path)
+                results["vocals_path"] = str(vocals_path)
+                logger.debug(f"Saved vocals to: {vocals_path}")
+                logger.debug(f"Vocals file size: {Path(vocals_path).stat().st_size}")
+
+            # Save accompaniment if extracted
+            if accompaniment_path and "accompaniment_data" in modal_result:
+                with open(accompaniment_path, 'wb') as f:
+                    f.write(modal_result["accompaniment_data"])
+                results["accompaniment"] = str(accompaniment_path)
+                results["accompaniment_path"] = str(accompaniment_path)
+                logger.debug(f"Saved accompaniment to: {accompaniment_path}")
+                logger.debug(f"Accompaniment file size: {Path(accompaniment_path).stat().st_size}")
+
+            # For piano extraction, we need vocals (will be processed separately for piano sound)
+            if piano_path and "vocals_data" in modal_result:
+                # For now, save vocals as piano (can be enhanced later with piano-specific processing)
+                with open(piano_path, 'wb') as f:
+                    f.write(modal_result["vocals_data"])
+                results["piano"] = str(piano_path)
+                results["piano_path"] = str(piano_path)
+                logger.debug(f"Saved piano to: {piano_path}")
+                logger.debug(f"Piano file size: {Path(piano_path).stat().st_size}")
+
+            await self._send_progress(100, "Complete!")
+            logger.debug("Processing completed successfully!")
+
+            return results
 
         except Exception as e:
             logger.error(f"Error in process_audio: {e}")
             await self._send_progress(0, f"Error: {str(e)}")
             raise
 
-    def convert_to_midi(self, audio_path: str, output_path: str, 
-                       note_threshold: float = 0.5, 
+    def convert_to_midi(self, audio_path: str, output_path: str,
+                       note_threshold: float = 0.5,
                        polyphony: int = 4,
                        min_duration: float = 0.1) -> str:
         """
@@ -211,97 +206,59 @@ class AudioProcessor:
         # Load and process audio
         loader = es.MonoLoader(filename=audio_path)
         audio = loader()
-        
+
         # Initialize algorithms
         w = es.Windowing(type='hann')
         spectrum = es.Spectrum()
         spectral_peaks = es.SpectralPeaks()
         hpcp = es.HPCP()
         key = es.Key()
-        
+
         # Process frame by frame
         frame_size = 2048
         hop_size = 512
         notes = []
-        
+
         for frame in es.FrameGenerator(audio, frameSize=frame_size, hopSize=hop_size):
             # Compute spectrum and peaks
             windowed_frame = w(frame)
             spec = spectrum(windowed_frame)
             frequencies, magnitudes = spectral_peaks(spec)
-            
+
             # Compute HPCP and key
             hpcp_values = hpcp(frequencies, magnitudes)
-            key_data = key(hpcp_values)
-            
-            # Extract notes above threshold
-            for i, magnitude in enumerate(magnitudes):
-                if magnitude > note_threshold:
-                    freq = frequencies[i]
-                    midi_note = self._freq_to_midi(freq)
-                    if midi_note:
-                        notes.append((midi_note, frame_size * len(notes) / 44100.0, magnitude))
-        
-        # Convert notes to MIDI
+
+            # Find dominant frequencies
+            if len(frequencies) > 0:
+                for freq, mag in zip(frequencies, magnitudes):
+                    if mag > note_threshold:
+                        # Convert frequency to MIDI note
+                        midi_note = int(69 + 12 * np.log2(freq / 440.0))
+                        if 21 <= midi_note <= 108:  # Piano range
+                            notes.append({
+                                'note': midi_note,
+                                'velocity': int(min(127, mag * 127)),
+                                'time': len(notes) * hop_size / 44100.0
+                            })
+
+        # Create MIDI file
         midi = MIDIFile(1)
+        midi.addTrackName(0, 0, "Piano")
         midi.addTempo(0, 0, 120)
-        
-        # Group notes by time and apply polyphony limit
-        grouped_notes = self._group_notes(notes, polyphony, min_duration)
-        
-        # Add notes to MIDI file
-        for note, start_time, duration, velocity in grouped_notes:
-            midi.addNote(0, 0, note, start_time, duration, int(velocity * 127))
-        
-        # Write MIDI file
-        with open(output_path, "wb") as f:
+
+        # Add notes to MIDI
+        for note in notes[:polyphony*100]:  # Limit notes to avoid huge files
+            midi.addNote(
+                track=0,
+                channel=0,
+                pitch=note['note'],
+                time=note['time'],
+                duration=min_duration,
+                volume=note['velocity']
+            )
+
+        # Write to file
+        with open(output_path, 'wb') as f:
             midi.writeFile(f)
-        
+
         return output_path
-
-    def _freq_to_midi(self, freq: float) -> int:
-        """Convert frequency to MIDI note number"""
-        if freq <= 0:
-            return None
-        return int(round(69 + 12 * np.log2(freq / 440.0)))
-
-    def _group_notes(self, notes: List[Tuple[int, float, float]], 
-                    polyphony: int, 
-                    min_duration: float) -> List[Tuple[int, float, float, float]]:
-        """Group notes by time and apply polyphony limit"""
-        if not notes:
-            return []
-        
-        # Sort notes by time
-        notes = sorted(notes, key=lambda x: x[1])
-        
-        # Group notes that start at similar times
-        grouped = []
-        current_group = []
-        current_time = notes[0][1]
-        
-        for note in notes:
-            if abs(note[1] - current_time) < min_duration:
-                current_group.append(note)
-            else:
-                # Process current group
-                if current_group:
-                    # Sort by magnitude and take top N based on polyphony
-                    current_group.sort(key=lambda x: x[2], reverse=True)
-                    for n in current_group[:polyphony]:
-                        # Calculate duration until next note
-                        next_time = note[1]
-                        duration = max(min_duration, next_time - n[1])
-                        grouped.append((n[0], n[1], duration, n[2]))
-                
-                current_group = [note]
-                current_time = note[1]
-        
-        # Process last group
-        if current_group:
-            current_group.sort(key=lambda x: x[2], reverse=True)
-            for n in current_group[:polyphony]:
-                duration = max(min_duration, 0.5)  # Default duration for last notes
-                grouped.append((n[0], n[1], duration, n[2]))
-        
-        return grouped

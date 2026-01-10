@@ -24,7 +24,8 @@ A modern audio processing tool for separating vocals, detecting chords, and fetc
 
 - **Frontend**: React + Vite + TailwindCSS
 - **Backend**: FastAPI + Python
-- **Audio Processing**: Demucs, Librosa, Essentia
+- **Audio Processing**: Librosa, Essentia, PyTorch
+- **GPU Processing**: Modal (for vocal separation)
 
 ## Configuration (YouTube Features)
 
@@ -48,6 +49,36 @@ To enable YouTube search, you need to set up a YouTube API key:
 
 The YouTube search functionality works fine, but video download/analysis may fail due to platform networking policies.
 
+## Modal Configuration (Required for Vocal Separation)
 
+**Important**: Vocal separation requires Modal GPU processing. This is configured to work with Railway and other platforms.
+
+### Setup Modal
+
+1. Create a Modal account at [modal.com](https://modal.com)
+2. Get your Modal credentials from the dashboard
+3. Deploy the Modal functions:
+   ```bash
+   modal deploy modal_functions.py
+   ```
+4. Set environment variables in your deployment platform (Railway/Render/etc):
+   ```
+   MODALTOKENID=your_modal_token_id
+   MODALTOKENSECRET=your_modal_token_secret
+   ```
+
+**Why Modal?**
+- Vocal separation uses Demucs, which requires significant compute resources (~6GB+ Docker image)
+- Modal provides GPU-accelerated processing on-demand
+- Reduces deployment image size from 6.2GB to ~3.8GB (fits Railway free tier 4GB limit)
+- Only pay for GPU time when actually separating vocals
+
+**Features that use Modal:**
+- ✅ Vocal separation (extract vocals/accompaniment)
+- ✅ Piano extraction
+- ❌ Chord detection (runs locally, no Modal needed)
+- ❌ YouTube search (runs locally, no Modal needed)
+
+# Updated Jan 9 2026: Modal-based vocal separation for Railway deployment (v2.4)
 # Updated Jan 3 2026: YouTube Integration - Search and analyze YouTube videos directly (v2.3)
 # Updated Jan 2 23:30:00 IST 2026: Cleaned UI - removed advanced settings panel and timeline table (v2.2)
