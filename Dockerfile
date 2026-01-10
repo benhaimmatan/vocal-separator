@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 \
     nginx \
     curl \
+    sed \
     gcc \
     g++ \
     && apt-get clean \
@@ -49,36 +50,23 @@ COPY --from=frontend-builder /app/frontend/dist ./static/
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create startup script with Railway port support
+# Create simple, robust startup script
 RUN echo '#!/bin/bash\n\
 set -e\n\
-\n\
-# Use Railway PORT or default to 7860\n\
-export APP_PORT=${PORT:-7860}\n\
-echo "Using port: $APP_PORT"\n\
-\n\
-# Update nginx config with the correct port\n\
-sed -i "s/listen 7860;/listen $APP_PORT;/" /etc/nginx/nginx.conf\n\
-\n\
-echo "Starting nginx on port $APP_PORT..."\n\
-nginx -t && nginx &\n\
-NGINX_PID=$!\n\
-\n\
-echo "Waiting for nginx to start..."\n\
+export PORT=${PORT:-7860}\n\
+echo "=== Vocal Separator Starting ==="\n\
+echo "PORT: $PORT"\n\
+echo "Configuring nginx..."\n\
+sed -i "s/listen 7860;/listen $PORT;/" /etc/nginx/nginx.conf\n\
+echo "Testing nginx configuration..."\n\
+nginx -t\n\
+echo "Starting nginx..."\n\
+nginx\n\
 sleep 2\n\
-\n\
-echo "Starting FastAPI server on port 8000..."\n\
-cd /app && PYTHONPATH=/app:/app/backend python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 &\n\
-FASTAPI_PID=$!\n\
-\n\
-echo "Services started. Nginx PID: $NGINX_PID (port $APP_PORT), FastAPI PID: $FASTAPI_PID (port 8000)"\n\
-\n\
-# Wait for both processes\n\
-wait -n\n\
-\n\
-# If either exits, kill the other and exit\n\
-kill $NGINX_PID $FASTAPI_PID 2>/dev/null\n\
-exit 1' > /app/start.sh
+echo "Starting FastAPI backend..."\n\
+cd /app\n\
+export PYTHONPATH=/app:/app/backend\n\
+exec python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 
