@@ -64,7 +64,6 @@ echo "Starting nginx..."\n\
 nginx\n\
 sleep 2\n\
 echo "Starting FastAPI backend..."\n\
-cd /app\n\
 export PYTHONPATH=/app:/app/backend\n\
 exec python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
 
