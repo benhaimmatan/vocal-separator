@@ -49,22 +49,29 @@ COPY --from=frontend-builder /app/frontend/dist ./static/
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create startup script with better error handling
+# Create startup script with Railway port support
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
-echo "Starting nginx..."\n\
+# Use Railway PORT or default to 7860\n\
+export APP_PORT=${PORT:-7860}\n\
+echo "Using port: $APP_PORT"\n\
+\n\
+# Update nginx config with the correct port\n\
+sed -i "s/listen 7860;/listen $APP_PORT;/" /etc/nginx/nginx.conf\n\
+\n\
+echo "Starting nginx on port $APP_PORT..."\n\
 nginx -t && nginx &\n\
 NGINX_PID=$!\n\
 \n\
 echo "Waiting for nginx to start..."\n\
 sleep 2\n\
 \n\
-echo "Starting FastAPI server..."\n\
+echo "Starting FastAPI server on port 8000..."\n\
 cd /app && PYTHONPATH=/app:/app/backend python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 &\n\
 FASTAPI_PID=$!\n\
 \n\
-echo "Services started. Nginx PID: $NGINX_PID, FastAPI PID: $FASTAPI_PID"\n\
+echo "Services started. Nginx PID: $NGINX_PID (port $APP_PORT), FastAPI PID: $FASTAPI_PID (port 8000)"\n\
 \n\
 # Wait for both processes\n\
 wait -n\n\
@@ -85,8 +92,8 @@ RUN apt-get remove -y gcc g++ \
 EXPOSE 7860
 
 # Health check for Railway/platforms that support it
-# Increased start-period for Railway's initial boot
+# Uses PORT environment variable (Railway provides this)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-  CMD curl -f http://localhost:7860/api/health || exit 1
+  CMD curl -f http://localhost:${PORT:-7860}/api/health || exit 1
 
 CMD ["/app/start.sh"]
