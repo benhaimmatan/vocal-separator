@@ -14,12 +14,18 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize YouTube API
+# Debug: Print environment variable status
+import sys
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
+print(f"[DEBUG] YOUTUBE_API_KEY present: {YOUTUBE_API_KEY is not None}", file=sys.stderr)
+print(f"[DEBUG] YOUTUBE_API_KEY length: {len(YOUTUBE_API_KEY) if YOUTUBE_API_KEY else 0}", file=sys.stderr)
+
+# Initialize YouTube API
 if not YOUTUBE_API_KEY:
     logger.warning("YOUTUBE_API_KEY not set - YouTube search will not work")
     youtube_api = None
 else:
+    logger.info(f"YouTube API initialized successfully with key: {YOUTUBE_API_KEY[:10]}...")
     youtube_api = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 

@@ -31,7 +31,11 @@ try:
     # Check for Modal credentials first
     modal_token_id = os.getenv("MODALTOKENID")
     modal_token_secret = os.getenv("MODALTOKENSECRET")
-    
+
+    # Debug logging
+    print(f"[DEBUG] MODALTOKENID present: {modal_token_id is not None}", file=sys.stderr)
+    print(f"[DEBUG] MODALTOKENSECRET present: {modal_token_secret is not None}", file=sys.stderr)
+
     if not modal_token_id or not modal_token_secret:
         MODAL_ENABLED = False
         print("Modal credentials not found in environment - falling back to CPU")
