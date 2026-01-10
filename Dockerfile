@@ -49,13 +49,29 @@ COPY --from=frontend-builder /app/frontend/dist ./static/
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create startup script
+# Create startup script with better error handling
 RUN echo '#!/bin/bash\n\
-# Start nginx in background\n\
-nginx &\n\
+set -e\n\
 \n\
-# Start FastAPI server\n\
-cd /app && PYTHONPATH=/app:/app/backend python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
+echo "Starting nginx..."\n\
+nginx -t && nginx &\n\
+NGINX_PID=$!\n\
+\n\
+echo "Waiting for nginx to start..."\n\
+sleep 2\n\
+\n\
+echo "Starting FastAPI server..."\n\
+cd /app && PYTHONPATH=/app:/app/backend python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 &\n\
+FASTAPI_PID=$!\n\
+\n\
+echo "Services started. Nginx PID: $NGINX_PID, FastAPI PID: $FASTAPI_PID"\n\
+\n\
+# Wait for both processes\n\
+wait -n\n\
+\n\
+# If either exits, kill the other and exit\n\
+kill $NGINX_PID $FASTAPI_PID 2>/dev/null\n\
+exit 1' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 
@@ -69,7 +85,8 @@ RUN apt-get remove -y gcc g++ \
 EXPOSE 7860
 
 # Health check for Railway/platforms that support it
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+# Increased start-period for Railway's initial boot
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
   CMD curl -f http://localhost:7860/api/health || exit 1
 
 CMD ["/app/start.sh"]
