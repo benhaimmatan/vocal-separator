@@ -1,7 +1,7 @@
 # FastAPI + React deployment - Optimized for Railway
 # Compatible with: Railway, Render, Fly.io, Google Cloud Run, HuggingFace Spaces
-# Build v2.6.0 - 2026-01-11 - Force new image tag
-ARG CACHEBUST=20260111124500
+# Build v2.7.0 - 2026-01-11 - Use COPY for start.sh instead of RUN echo
+ARG CACHEBUST=20260111130000
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
@@ -65,30 +65,9 @@ RUN if head -n 1 backend/BTC-ISMIR19/test/btc_model_large_voca.pt 2>/dev/null | 
         echo "✅ LFS files already present"; \
     fi
 
-# Copy nginx config
+# Copy nginx config and startup script
 COPY nginx.conf /etc/nginx/nginx.conf
-
-# Force cache invalidation before startup script - Updated: 2026-01-11-12:35
-RUN echo "Cache bust: 2026-01-11-12:35 - Force rebuild of startup script and all subsequent layers"
-
-# Create simple, robust startup script - Updated 2026-01-11-12:35
-RUN echo '#!/bin/bash\n\
-set -e\n\
-export PORT=${PORT:-7860}\n\
-echo "=== Vocal Separator Starting v2.5.0 ==="\n\
-echo "Build timestamp: 2026-01-11-12:35"\n\
-echo "PORT: $PORT"\n\
-echo "Configuring nginx..."\n\
-sed -i "s/listen 7860;/listen $PORT;/" /etc/nginx/nginx.conf\n\
-echo "Testing nginx configuration..."\n\
-nginx -t\n\
-echo "Starting nginx..."\n\
-nginx\n\
-sleep 2\n\
-echo "Starting FastAPI backend..."\n\
-export PYTHONPATH=/app:/app/backend\n\
-exec python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
-
+COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
 # Final cleanup to minimize image size
@@ -97,9 +76,9 @@ RUN apt-get remove -y gcc g++ \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
 
 # Add image metadata to force new image hash
-LABEL version="2.6.0" \
-      build-date="2026-01-11-12:45" \
-      description="Vocal Separator - Fresh build without cached layers"
+LABEL version="2.7.0" \
+      build-date="2026-01-11-13:00" \
+      description="Vocal Separator - Using COPY for startup script"
 
 # Expose port 7860 (HuggingFace default)
 # Railway/Render will auto-detect from nginx config
