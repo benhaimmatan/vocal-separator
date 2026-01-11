@@ -40,6 +40,10 @@ class AdvancedChordDetector:
     
     def __init__(self):
         self.btc_model = None
+        self.btc_config = None
+        self.btc_mean = None
+        self.btc_std = None
+        self.idx_to_chord = None
         self.autochord_available = False
         self.device = self._get_device()
 
@@ -115,6 +119,12 @@ class AdvancedChordDetector:
             logger.error(f"Failed to load BTC model: {e}")
             import traceback
             traceback.print_exc()
+            # Ensure model and config are None on failure
+            self.btc_model = None
+            self.btc_config = None
+            self.btc_mean = None
+            self.btc_std = None
+            self.idx_to_chord = None
             return False
     
     def _load_autochord(self):
@@ -283,7 +293,7 @@ class AdvancedChordDetector:
         """
         Primary chord detection using BTC-ISMIR19 model
         """
-        if not hasattr(self, 'btc_model') or self.btc_model is None:
+        if not hasattr(self, 'btc_model') or self.btc_model is None or self.btc_config is None:
             logger.warning("BTC model not loaded, skipping BTC detection")
             return []
 

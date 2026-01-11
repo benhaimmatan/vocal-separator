@@ -27,6 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sed \
     gcc \
     g++ \
+    git \
+    git-lfs \
+    && git lfs install \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /tmp/* /var/tmp/*
@@ -46,6 +49,21 @@ RUN pip install --no-cache-dir -r requirements.txt \
 COPY backend/ ./backend/
 COPY modal_functions.py ./
 COPY --from=frontend-builder /app/frontend/dist ./static/
+
+# Copy .git directory to pull LFS files (Railway clones without LFS by default)
+COPY .git .git
+COPY .gitattributes .gitattributes 2>/dev/null || true
+
+# Pull LFS files if they're pointers
+RUN if [ -f backend/BTC-ISMIR19/test/btc_model_large_voca.pt ] && head -n 1 backend/BTC-ISMIR19/test/btc_model_large_voca.pt 2>/dev/null | grep -q "version https://git-lfs"; then \
+        echo "🔄 Detected LFS pointer files, pulling actual model files..."; \
+        git lfs pull && echo "✅ LFS files pulled successfully"; \
+    else \
+        echo "✅ LFS files already present or not needed"; \
+    fi
+
+# Clean up git directory to save space
+RUN rm -rf .git
 
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
