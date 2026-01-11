@@ -1,16 +1,27 @@
 #!/bin/bash
 set -e
-export PORT=${PORT:-7860}
-echo "=== Vocal Separator Starting v2.7.0 ==="
-echo "Build: 2026-01-11-13:00"
-echo "PORT: $PORT"
+
+# Railway provides PORT (external), backend always runs on 8000 (internal)
+NGINX_PORT=${PORT:-7860}
+BACKEND_PORT=8000
+
+echo "=== Vocal Separator Starting v2.8.0 ==="
+echo "Build: 2026-01-11-13:15"
+echo "Nginx (external) PORT: $NGINX_PORT"
+echo "FastAPI (internal) PORT: $BACKEND_PORT"
+
 echo "Configuring nginx..."
-sed -i "s/listen 7860;/listen $PORT;/" /etc/nginx/nginx.conf
+sed -i "s/listen 7860;/listen $NGINX_PORT;/" /etc/nginx/nginx.conf
+
 echo "Testing nginx configuration..."
 nginx -t
+
 echo "Starting nginx..."
 nginx
-sleep 2
-echo "Starting FastAPI backend..."
+
+echo "Waiting for nginx to start..."
+sleep 3
+
+echo "Starting FastAPI backend on port $BACKEND_PORT..."
 export PYTHONPATH=/app:/app/backend
-exec python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+exec python -m uvicorn backend.main:app --host 0.0.0.0 --port $BACKEND_PORT
