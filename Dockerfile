@@ -1,6 +1,6 @@
 # FastAPI + React deployment - Optimized for Railway
 # Compatible with: Railway, Render, Fly.io, Google Cloud Run, HuggingFace Spaces
-# Build v2.3.9 - 2026-01-09 - Optimized image size (target: <4GB)
+# Build v2.4.0 - 2026-01-11 - Fixed LFS model loading + cache invalidation
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
@@ -50,8 +50,8 @@ COPY backend/ ./backend/
 COPY modal_functions.py ./
 COPY --from=frontend-builder /app/frontend/dist ./static/
 
-# Force cache invalidation - Updated: 2026-01-11-11:15
-RUN echo "Cache bust: 2026-01-11-11:15"
+# Force cache invalidation - Updated: 2026-01-11-11:30-rebuild-all
+RUN echo "Cache bust: 2026-01-11-11:30 - Full rebuild to clear old cd commands"
 
 # Download LFS model files if they're pointer files
 # Railway doesn't pull LFS files by default, so we check and download them directly from GitHub LFS
