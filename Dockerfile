@@ -52,6 +52,7 @@ COPY --from=frontend-builder /app/frontend/dist ./static/
 
 # Download LFS model files if they're pointer files
 # Railway doesn't pull LFS files by default, so we check and download them directly from GitHub LFS
+# Updated: 2026-01-11 - Fixed cd command issue, use full paths
 RUN if head -n 1 backend/BTC-ISMIR19/test/btc_model_large_voca.pt 2>/dev/null | grep -q "^version https://git-lfs"; then \
         echo "🔄 Detected LFS pointer files, downloading actual model files from GitHub LFS..." && \
         # Download btc_model.pt (12MB) - OID: 71c2c5db17...
