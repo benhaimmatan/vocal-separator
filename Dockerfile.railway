@@ -51,9 +51,6 @@ COPY backend/ ./backend/
 COPY modal_functions.py ./
 COPY --from=frontend-builder /app/frontend/dist ./static/
 
-# Force cache invalidation - Updated: 2026-01-11-11:30-rebuild-all
-RUN echo "Cache bust: 2026-01-11-11:30 - Full rebuild to clear old cd commands"
-
 # Download LFS model files if they're pointer files
 # Railway doesn't pull LFS files by default, so we check and download them directly from GitHub LFS
 # Updated: 2026-01-11 - Fixed cd command issue, use full paths
@@ -71,11 +68,15 @@ RUN if head -n 1 backend/BTC-ISMIR19/test/btc_model_large_voca.pt 2>/dev/null | 
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create simple, robust startup script
+# Force cache invalidation before startup script - Updated: 2026-01-11-12:35
+RUN echo "Cache bust: 2026-01-11-12:35 - Force rebuild of startup script and all subsequent layers"
+
+# Create simple, robust startup script - Updated 2026-01-11-12:35
 RUN echo '#!/bin/bash\n\
 set -e\n\
 export PORT=${PORT:-7860}\n\
-echo "=== Vocal Separator Starting ==="\n\
+echo "=== Vocal Separator Starting v2.5.0 ==="\n\
+echo "Build timestamp: 2026-01-11-12:35"\n\
 echo "PORT: $PORT"\n\
 echo "Configuring nginx..."\n\
 sed -i "s/listen 7860;/listen $PORT;/" /etc/nginx/nginx.conf\n\
