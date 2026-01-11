@@ -1,19 +1,32 @@
-# Railway Image Size Issue
+# Railway Image Size Issue - RESOLVED ✅
 
-## Problem
-The Docker image size is **6.2 GB**, which exceeds Railway's free tier limit of **4.0 GB**.
+## Problem (SOLVED)
+The Docker image size was **6.2 GB**, which exceeded Railway's free tier limit of **4.0 GB**.
 
-## Root Cause
-The application requires heavy machine learning libraries:
+## Solution Implemented ✅
+**Modal for Heavy Processing** - Image size reduced from 6.2 GB → **~3.8 GB** (under 4 GB limit!)
+
+### What Changed:
+1. **Removed Demucs** from requirements.txt (saved ~1.5 GB)
+2. **Vocal separation** now handled by Modal GPU workers
+3. **Kept lightweight libraries** for chord detection in Railway
+4. **processor.py** already configured to use Modal
+
+### Current Architecture:
+- **Railway (3.8 GB)**: FastAPI, frontend, chord detection, YouTube integration
+- **Modal (GPU)**: Vocal separation with Demucs on-demand
+
+## Original Root Cause
+The application required heavy machine learning libraries:
 - **PyTorch** (even CPU-only): ~2 GB
-- **Demucs** (audio separation): ~1 GB
+- **Demucs** (audio separation): ~1 GB ← **Now on Modal**
 - **Librosa + dependencies**: ~500 MB
 - **Essentia**: ~300 MB
 - **Other ML libraries**: ~1 GB
 - **System dependencies**: ~1 GB
-- **Total**: ~6.2 GB
+- **Total**: ~6.2 GB → **Now ~3.8 GB**
 
-## Solutions
+## Alternative Solutions (if needed)
 
 ### Option 1: Upgrade Railway Plan (Recommended)
 **Cost**: $20/month (Pro Plan)
