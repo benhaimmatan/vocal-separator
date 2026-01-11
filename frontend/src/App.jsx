@@ -419,7 +419,7 @@ export default function App() {
     setProcessing(true);
     setError(null);
     try {
-      const bpmValue = bpmOverride ? parseFloat(bpmOverride) : null;
+      const bpmValue = bpmOverride && bpmOverride.trim() !== '' ? parseFloat(bpmOverride) : null;
       const res = await api.detectChords(file, authToken, simplicityPreference, bpmValue);
       if (res.success) {
         setChords(res.chords);
@@ -916,7 +916,7 @@ export default function App() {
                         if (lyrRes.success) setLyrics(lyrRes);
                       }
                       if (file) {
-                        const bpmValue = bpmOverride ? parseFloat(bpmOverride) : null;
+                        const bpmValue = bpmOverride && bpmOverride.trim() !== '' ? parseFloat(bpmOverride) : null;
                         const chordRes = await api.detectChords(file, authToken, simplicityPreference, bpmValue);
                         if (chordRes.success) setChords(chordRes.chords);
                       }
