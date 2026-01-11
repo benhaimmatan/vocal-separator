@@ -50,6 +50,9 @@ COPY backend/ ./backend/
 COPY modal_functions.py ./
 COPY --from=frontend-builder /app/frontend/dist ./static/
 
+# Force cache invalidation - Updated: 2026-01-11-11:15
+RUN echo "Cache bust: 2026-01-11-11:15"
+
 # Download LFS model files if they're pointer files
 # Railway doesn't pull LFS files by default, so we check and download them directly from GitHub LFS
 # Updated: 2026-01-11 - Fixed cd command issue, use full paths
