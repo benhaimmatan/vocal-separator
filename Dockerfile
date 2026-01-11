@@ -1,6 +1,7 @@
 # FastAPI + React deployment - Optimized for Railway
 # Compatible with: Railway, Render, Fly.io, Google Cloud Run, HuggingFace Spaces
-# Build v2.4.0 - 2026-01-11 - Fixed LFS model loading + cache invalidation
+# Build v2.4.1 - 2026-01-11 - Complete cache invalidation
+ARG CACHEBUST=20260111120000
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
