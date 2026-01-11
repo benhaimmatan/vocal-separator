@@ -65,6 +65,9 @@ RUN if head -n 1 backend/BTC-ISMIR19/test/btc_model_large_voca.pt 2>/dev/null | 
         echo "✅ LFS files already present"; \
     fi
 
+# Force cache invalidation for config files - 2026-01-11-13:30
+RUN echo "Cache invalidation: 2026-01-11-13:30 - Force COPY layers to rebuild"
+
 # Copy nginx config and startup script
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY start.sh /app/start.sh
