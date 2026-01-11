@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Railway provides PORT (external), backend always runs on 8000 (internal)
+# Railway provides PORT (external), backend runs on different internal port
 NGINX_PORT=${PORT:-7860}
-BACKEND_PORT=8000
+BACKEND_PORT=8001
 
 echo "=== Vocal Separator Starting v2.8.0 ==="
 echo "Build: 2026-01-11-13:15"
