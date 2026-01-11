@@ -53,13 +53,11 @@ COPY --from=frontend-builder /app/frontend/dist ./static/
 # Download LFS model files if they're pointer files
 # Railway doesn't pull LFS files by default, so we check and download them directly from GitHub LFS
 RUN if head -n 1 backend/BTC-ISMIR19/test/btc_model_large_voca.pt 2>/dev/null | grep -q "^version https://git-lfs"; then \
-        echo "🔄 Detected LFS pointer files, downloading actual model files from GitHub LFS..."; \
-        cd backend/BTC-ISMIR19/test && \
+        echo "🔄 Detected LFS pointer files, downloading actual model files from GitHub LFS..." && \
         # Download btc_model.pt (12MB) - OID: 71c2c5db17...
-        curl -L -o btc_model.pt "https://media.githubusercontent.com/media/benhaimmatan/vocal-separator/main/backend/BTC-ISMIR19/test/btc_model.pt" && \
+        curl -L -o backend/BTC-ISMIR19/test/btc_model.pt "https://media.githubusercontent.com/media/benhaimmatan/vocal-separator/main/backend/BTC-ISMIR19/test/btc_model.pt" && \
         # Download btc_model_large_voca.pt (12MB) - OID: 1673d23f8f...
-        curl -L -o btc_model_large_voca.pt "https://media.githubusercontent.com/media/benhaimmatan/vocal-separator/main/backend/BTC-ISMIR19/test/btc_model_large_voca.pt" && \
-        cd /app && \
+        curl -L -o backend/BTC-ISMIR19/test/btc_model_large_voca.pt "https://media.githubusercontent.com/media/benhaimmatan/vocal-separator/main/backend/BTC-ISMIR19/test/btc_model_large_voca.pt" && \
         echo "✅ Model files downloaded successfully"; \
     else \
         echo "✅ LFS files already present"; \
