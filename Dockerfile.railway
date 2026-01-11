@@ -1,7 +1,7 @@
 # FastAPI + React deployment - Optimized for Railway
 # Compatible with: Railway, Render, Fly.io, Google Cloud Run, HuggingFace Spaces
-# Build v2.5.0 - 2026-01-11 - New Dockerfile to bypass Railway cache
-ARG CACHEBUST=20260111123000
+# Build v2.6.0 - 2026-01-11 - Force new image tag
+ARG CACHEBUST=20260111124500
 FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/frontend
@@ -95,6 +95,11 @@ RUN chmod +x /app/start.sh
 RUN apt-get remove -y gcc g++ \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
+
+# Add image metadata to force new image hash
+LABEL version="2.6.0" \
+      build-date="2026-01-11-12:45" \
+      description="Vocal Separator - Fresh build without cached layers"
 
 # Expose port 7860 (HuggingFace default)
 # Railway/Render will auto-detect from nginx config
