@@ -50,20 +50,20 @@ COPY backend/ ./backend/
 COPY modal_functions.py ./
 COPY --from=frontend-builder /app/frontend/dist ./static/
 
-# Copy .git directory to pull LFS files (Railway clones without LFS by default)
-COPY .git .git
-COPY .gitattributes .gitattributes 2>/dev/null || true
-
-# Pull LFS files if they're pointers
-RUN if [ -f backend/BTC-ISMIR19/test/btc_model_large_voca.pt ] && head -n 1 backend/BTC-ISMIR19/test/btc_model_large_voca.pt 2>/dev/null | grep -q "version https://git-lfs"; then \
-        echo "🔄 Detected LFS pointer files, pulling actual model files..."; \
-        git lfs pull && echo "✅ LFS files pulled successfully"; \
+# Download LFS model files if they're pointer files
+# Railway doesn't pull LFS files by default, so we check and download them directly from GitHub LFS
+RUN if head -n 1 backend/BTC-ISMIR19/test/btc_model_large_voca.pt 2>/dev/null | grep -q "^version https://git-lfs"; then \
+        echo "🔄 Detected LFS pointer files, downloading actual model files from GitHub LFS..."; \
+        cd backend/BTC-ISMIR19/test && \
+        # Download btc_model.pt (12MB) - OID: 71c2c5db17...
+        curl -L -o btc_model.pt "https://media.githubusercontent.com/media/benhaimmatan/vocal-separator/main/backend/BTC-ISMIR19/test/btc_model.pt" && \
+        # Download btc_model_large_voca.pt (12MB) - OID: 1673d23f8f...
+        curl -L -o btc_model_large_voca.pt "https://media.githubusercontent.com/media/benhaimmatan/vocal-separator/main/backend/BTC-ISMIR19/test/btc_model_large_voca.pt" && \
+        cd /app && \
+        echo "✅ Model files downloaded successfully"; \
     else \
-        echo "✅ LFS files already present or not needed"; \
+        echo "✅ LFS files already present"; \
     fi
-
-# Clean up git directory to save space
-RUN rm -rf .git
 
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
