@@ -554,6 +554,10 @@ export default function App() {
             youtubeVideoId={file?.youtubeVideoId}
             onBack={() => {
               setShowChordAnalyzer(false);
+              // Clear chord detection state to return to YouTube search results
+              setChords(null);
+              setFile(null);
+              setDetectedBpm(120);
             }}
           />
         ) : (

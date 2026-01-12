@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Square, Download } from 'lucide-react';
+import { Play, Pause, Square, Download, LayoutGrid, List } from 'lucide-react';
 import ChordProgressionBar from './ChordProgressionBar';
 import PianoChordDiagram from './PianoChordDiagram';
+import ChordListView from './ChordListView';
 
 // Chord Card Component
 const ChordCard = ({ chord, bpm, beats, isActive, isNext, onClick }) => {
@@ -173,6 +174,7 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
   const [capo, setCapo] = useState(0);
   const [bpm, setBPM] = useState(detectedBPM || 120);  // Use backend BPM
   const [youtubeReady, setYoutubeReady] = useState(false);
+  const [viewMode, setViewMode] = useState('timeline'); // 'timeline' or 'list'
   const scrollContainerRef = useRef(null);
 
   // Convert chord data to include beats and BPM info
@@ -236,8 +238,23 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
 
   // Initialize YouTube player
   useEffect(() => {
-    if (!youtubeVideoId || !youtubeReady) return;
+    // Only initialize in timeline mode
+    if (!youtubeVideoId || !youtubeReady || viewMode !== 'timeline') return;
 
+    // Check if player div exists (it only exists in timeline view)
+    const playerDiv = document.getElementById('youtube-player');
+    if (!playerDiv) return;
+
+    // Destroy existing player if any
+    if (youtubePlayerRef.current && youtubePlayerRef.current.destroy) {
+      try {
+        youtubePlayerRef.current.destroy();
+      } catch (e) {
+        console.warn('Error destroying YouTube player:', e);
+      }
+    }
+
+    // Create new player instance
     youtubePlayerRef.current = new window.YT.Player('youtube-player', {
       videoId: youtubeVideoId,
       playerVars: {
@@ -274,10 +291,14 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
 
     return () => {
       if (youtubePlayerRef.current && youtubePlayerRef.current.destroy) {
-        youtubePlayerRef.current.destroy();
+        try {
+          youtubePlayerRef.current.destroy();
+        } catch (e) {
+          console.warn('Error cleaning up YouTube player:', e);
+        }
       }
     };
-  }, [youtubeVideoId, youtubeReady]);
+  }, [youtubeVideoId, youtubeReady, viewMode]);
 
   // Audio event handlers
   const handlePlayPause = async () => {
@@ -448,6 +469,37 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
           >
             ← Back
           </button>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-1 bg-zinc-800/50 p-1 rounded-lg border border-zinc-700/50">
+            <button
+              onClick={() => setViewMode('timeline')}
+              className={`
+                flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200
+                ${viewMode === 'timeline'
+                  ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-300 hover:bg-zinc-700/50'
+                }
+              `}
+            >
+              <LayoutGrid size={16} />
+              Timeline
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`
+                flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200
+                ${viewMode === 'list'
+                  ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-300 hover:bg-zinc-700/50'
+                }
+              `}
+            >
+              <List size={16} />
+              List
+            </button>
+          </div>
+
           <div>
             <h1 className="text-lg font-semibold text-zinc-100 tracking-tight">Chord Analyzer</h1>
           </div>
@@ -479,15 +531,26 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
         />
       )}
 
-      {/* Main Content - Grid Layout */}
-      <div
-        className="flex-1 p-6 overflow-hidden"
-        style={{ height: 'calc(100vh - 56px)' }}
-      >
-        <div className="h-full grid grid-rows-[minmax(0,1fr)_280px_auto] gap-6">
+      {/* Main Content - Conditional View */}
+      {viewMode === 'list' ? (
+        /* List View - Printable Chord Progression */
+        <ChordListView
+          chordData={chordData}
+          bpm={bpm}
+          fileName={audioFile?.name}
+          capo={capo}
+          transposeChord={transposeChord}
+        />
+      ) : (
+        /* Timeline View - Interactive Grid Layout */
+        <div
+          className="flex-1 p-6 overflow-hidden"
+          style={{ height: 'calc(100vh - 56px)' }}
+        >
+          <div className="h-full grid grid-rows-[minmax(0,1fr)_280px_auto] gap-6">
 
-          {/* Top Row - Video + Piano Grid */}
-          <div className="grid grid-cols-[1.5fr_1fr] gap-6 min-h-0">
+            {/* Top Row - Video + Piano Grid */}
+            <div className="grid grid-cols-[1.5fr_1fr] gap-6 min-h-0">
 
             {/* Left: YouTube Player / Audio Placeholder */}
             <div className="bg-gradient-to-br from-zinc-900/90 to-zinc-800/90 backdrop-blur-sm rounded-2xl border border-zinc-700/50 overflow-hidden shadow-2xl shadow-black/20 flex items-center justify-center">
@@ -569,8 +632,9 @@ const ChordAnalyzer = ({ audioFile, chordData, detectedBPM, onBack, onMovingWind
             />
           </div>
 
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Custom CSS for slider */}
       <style>{`
